@@ -1,11 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" manifest="/cache.manifest">
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <script src="/js/app.js"></script>
+    <link rel="apple-touch-icon" href="touch-icon-iphone.png" />
+
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="touch-icon-iphone.png" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="touch-icon-iphone.png" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="touch-icon-iphone.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="touch-icon-iphone.png" />
+
+<!--    <meta name="apple-mobile-web-app-capable" content="yes">     -->
+    <meta name="apple-mobile-web-app-title" content="Hillnav GPS">
+
+    <script src="/js/app.js?123"></script>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <script src="/js/bootstrap.min.js"></script>
   </head>
@@ -51,27 +61,34 @@
     </div>
     <div class="card-body">
       <h5 class="card-title" id="ref">Awaiting Location ...</h5>
-      <p class="card-text">With 125 meters</p>
+      <p class="card-text" id="accuracy"></p>
+      <p class="card-text" id="ts"></p>
     </div>
   </div>
 
 </div>
 
+<a href="#" onClick="window.applicationCache.update();">Check for updates</a>
+
 
 <script>
-var x = document.getElementById("demo");
+  var x = document.getElementById("demo");
   var y = document.getElementById("ref");
+  var accuracy = document.getElementById("accuracy");
+  var ts = document.getElementById("ts");
 
   var pm = new HillNav.PositionManager();
   pm.setCoordinateSystem("Irish");
   pm.setNewPositionCallback(function(p){
     y.innerHTML = p.gridReference();
+    accuracy.innerHTML = p.accuracy;
+    ts.innerHTML = new Date();
   });
   
   
 function getLocation() {
     if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(pm.updatePosition.bind(pm), errorHandler, {enableHighAccuracy: true, maximumAge: 300000, timeout:300000});
+      navigator.geolocation.watchPosition(pm.updatePosition.bind(pm), errorHandler, {enableHighAccuracy: true, maximumAge: 60, timeout:300000});
     } else { 
         x.innerHTML = "Geolocation is not supported by this browser.";
     }
@@ -91,13 +108,15 @@ function showPosition(position) {
 
 }
 
-  var error
 function errorHandler(e) {
-  console.log("fgfgf: "+e);
-  error = e
+  console.log("Unable to get the geolocation position. Error code is: "+e.code);
+  console.log("The error message is: "+e.message);
+  if (e.code == 1) {
+    alert("The browser denied location access");
+  }
 }
 
-  getLocation();
+getLocation();
 </script>
 
 </body>

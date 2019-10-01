@@ -21,7 +21,7 @@ class IrishGridPosition extends AbstractPosition {
   }
 
   gridReference() {
-    return this.gridSquare+" "+this.gridEasting+" "+this.gridNorthing;
+    return this.gridSquare+" "+this.gridEasting/100+" "+this.gridNorthing/100;
   }
 
   latLonToNorthingEasting() {
