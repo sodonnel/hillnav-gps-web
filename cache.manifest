@@ -1,0 +1,17 @@
+CACHE MANIFEST
+
+# This is a comment.
+# Cache manifest version 0.0.10
+# If you change the version number in this comment,
+# the cache manifest is no longer byte-for-byte
+# identical.
+#
+# https://developer.apple.com/library/archive/documentation/iPhone/Conceptual/SafariJSDatabaseGuide/OfflineApplicationCache/OfflineApplicationCache.html
+
+CACHE:
+
+index.html
+js/app.js?123456
+js/bootstrap.min.js?123456
+css/bootstrap.min.css?123456
+touch-icon-iphone.png?123456

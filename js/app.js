@@ -13,6 +13,7 @@ class AbstractPosition {
     this.accuracy        = params['accuracy']
     this.elevation       = params['elevation']
     this.elevationAccuracy = params['elevationAccuracy']
+    this.speed             = params['speed']
     this.timestamp       = params['timestamp']
     
   }
@@ -20,17 +21,35 @@ class AbstractPosition {
   setPositionFromGPS(lat, lon, accuracy, timestamp) {
     this.gpsLatitude = lat;
     this.gpsLongitude = lon;
-    this.accuracy = accuracy;
+    // Accuracy is in meters, so round to nearest meter
+    this.accuracy = Math.round(accuracy);
     this.timestamp = timestamp;
     this.latLonToNorthingEasting();
     this.northingEastingToGrid();
   }
 
-  setElevation(elev, accuracy) {
+  setElevation(elev, accuracy, speed) {
     this.elevation = elev;
     this.elevationAccuracy = accuracy;
+    this.speed = speed;
   }
-  
+
+  minorEasting() {
+    return (this.gridEasting % 100).toString().padStart(2, "0");
+  }
+
+  majorEasting() {
+    return Math.floor(this.gridEasting / 100).toString().padStart(3, "0");
+  }
+
+  minorNorthing() {
+    return (this.gridNorthing % 100).toString().padStart(2, "0");
+  }
+
+  majorNorthing() {
+    return Math.floor(this.gridNorthing / 100).toString().padStart(3, "0");
+  }
+
 }
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
@@ -61,7 +80,7 @@ class IrishGridPosition extends AbstractPosition {
   }
 
   gridReference() {
-    return this.gridSquare+" "+this.gridEasting+" "+this.gridNorthing;
+    return this.gridSquare+" "+this.gridEasting/100+" "+this.gridNorthing/100;
   }
 
   latLonToNorthingEasting() {
@@ -284,10 +303,8 @@ class PositionManager {
   }
 
   updatePosition(pos) {
-    console.log("Trying to call it");
-    this.currentPosition.setPositionFromGPS(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-    // TODO - this is not the correct accuracy used here
-    this.currentPosition.setElevation(pos.coords.elevation, pos.coords.accuracy);
+    this.currentPosition.setPositionFromGPS(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.timestamp);
+    this.currentPosition.setElevation(pos.coords.altitude, pos.coords.altitudeAccuracy, pos.coords.speed);
     this.newPositionCallback(this.currentPosition);
   }
 

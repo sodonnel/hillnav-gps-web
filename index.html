@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel="apple-touch-icon" href="touch-icon-iphone.png" />
+    <link rel="apple-touch-icon" href="touch-icon-iphone.png?123456" />
 
 <link rel="apple-touch-icon-precomposed" sizes="57x57" href="touch-icon-iphone.png" />
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="touch-icon-iphone.png" />
@@ -15,9 +15,9 @@
 <!--    <meta name="apple-mobile-web-app-capable" content="yes">     -->
     <meta name="apple-mobile-web-app-title" content="Hillnav GPS">
 
-    <script src="/js/app.js?123"></script>
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
-    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/app.js?123456"></script>
+    <link rel="stylesheet" href="/css/bootstrap.min.css?123456">
+    <script src="/js/bootstrap.min.js?123456"></script>
   </head>
 <body>
 
@@ -56,45 +56,94 @@
 <div class="container" style="margin-top: 30px;">
 
   <div class="card">
-    <div class="card-header">
+    <div class="card-header" style="font-weight: bold; font-size: 15pt;">
       Irish Grid Position
     </div>
     <div class="card-body">
-      <h5 class="card-title" id="ref">Awaiting Location ...</h5>
-      <p class="card-text" id="accuracy"></p>
+      <p class="card-title" style="font-size: 30pt; margin-bottom: 0px;" id="ref">Awaiting Location ...</p>
+      <p class="card-text" style="font-size: 15pt;" id="accuracy"></p>
       <p class="card-text" id="ts"></p>
+   <!--   <p class="card-text" id="updates"></p> -->
     </div>
+    <div class="card-header" style="font-weight: bold; font-size: 15pt;">
+      Elevation and Speed
+    </div>
+    <div class="card-body">
+      <p class="card-text" style="font-size: 15pt;" id="elevation">Elevation: Awaiting Location ...</p>
+      <p class="card-text" style="font-size: 15pt;" id="speed">Speed: Awaiting Location ...</p>
+    </div>  
   </div>
 
 </div>
 
-<a href="#" onClick="window.applicationCache.update();">Check for updates</a>
+<!-- <a href="#" onClick="window.applicationCache.update();">Check for updates</a> -->
 
 
 <script>
+  var positionWatchID = null;
   var x = document.getElementById("demo");
   var y = document.getElementById("ref");
   var accuracy = document.getElementById("accuracy");
   var ts = document.getElementById("ts");
+  var elevation = document.getElementById("elevation");
+  var speed = document.getElementById("speed");
 
   var pm = new HillNav.PositionManager();
   pm.setCoordinateSystem("Irish");
   pm.setNewPositionCallback(function(p){
-    y.innerHTML = p.gridReference();
-    accuracy.innerHTML = p.accuracy;
-    ts.innerHTML = new Date();
-  });
+    y.innerHTML = formatGridReference(p);
+    accuracy.innerHTML = "Within "+ p.accuracy + " meters";
+    updatePositionAge(p);
+    updateElevationAndSpeed(p);
+  });  
   
-  
-function getLocation() {
+  function getLocation() {
     if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(pm.updatePosition.bind(pm), errorHandler, {enableHighAccuracy: true, maximumAge: 60, timeout:300000});
+      if (positionWatchID != null) {
+	navigator.geolocation.clearWatch(positionWatchID);
+      }
+      // maximumAge is supposed to be milli-seconds. So 1 minute is 60000
+      positionWatchID = navigator.geolocation.watchPosition(pm.updatePosition.bind(pm), errorHandler, {enableHighAccuracy: true, maximumAge: 60000, timeout:300000});
     } else { 
         x.innerHTML = "Geolocation is not supported by this browser.";
     }
-}
+  }
 
-function showPosition(position) {
+  function updatePositionAge(pos) {
+    if (!pos) {
+      return;
+    }
+    var d = new Date();
+    var now = d.getTime();
+    var age = Math.floor((now - pos.timestamp) / 1000)
+    if (age > 60) {
+      getLocation();
+    }
+    ts.innerHTML = "Position updated "+age+" seconds ago"
+  }
+
+  function formatGridReference(pos) {
+    return pos.gridSquare+" "+
+      pos.majorEasting()+
+      "<div style=\"display:inline; font-size: 20px\">"+pos.minorEasting()+"</div>&nbsp;&nbsp;"+
+      pos.majorNorthing()+
+      "<div style=\"display:inline; font-size: 20px\">"+pos.minorNorthing()+"</div>";
+  }
+
+  function updateElevationAndSpeed(p) {
+    if (p.elevation != null) {
+      elevation.innerHTML = "Elevation: "+Math.round(p.elevation)+"m (within  "+Math.round(p.elevationAccuracy)+"m)";
+    } else {
+      elevation.innerHTML = "Elevation: unavailable";
+    }
+    if (p.speed != null) {
+      speed.innerHTML = "Speed: "+Math.round(p.speed)+" m/s";
+    } else {
+      speed.innerHTML = "Speed: unavailable";
+    }
+  }
+  
+  function showPosition(position) {
     x.innerHTML = "Latitude: " + position.coords.latitude + 
     "<br>Longitude: " + position.coords.longitude +
     "<br>Accuracy: " + position.coords.accuracy +
@@ -102,21 +151,25 @@ function showPosition(position) {
     "<br>Speed: " + position.coords.speed +
     "<br>Timestamp: " + position.timestamp;
 
-  var I = HillNav.IrishGridPosition.initWithGWSLatLon(position.coords.latitude, position.coords.longitude);
-  
-  y.innerHTML = I.gridReference();
-
-}
-
-function errorHandler(e) {
-  console.log("Unable to get the geolocation position. Error code is: "+e.code);
-  console.log("The error message is: "+e.message);
-  if (e.code == 1) {
-    alert("The browser denied location access");
+    var I = HillNav.IrishGridPosition.initWithGWSLatLon(position.coords.latitude, position.coords.longitude);
+    y.innerHTML = I.gridReference();
   }
-}
 
-getLocation();
+  function errorHandler(e) {
+    console.log("Unable to get the geolocation position. Error code is: "+e.code);
+    console.log("The error message is: "+e.message);
+    if (e.code == 1) {
+      alert("The browser denied location access");
+    } else if (e.code == 2) {
+      alert("The position is unavailable");
+    } else if (e.code == 3) {
+      alert("Unable to get the position within the timeout");
+    }
+  }
+
+  getLocation();
+
+  var timer = setInterval(updatePositionAge, 10000, pm.currentPosition);
 </script>
 
 </body>

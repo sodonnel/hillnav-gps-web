@@ -31,10 +31,8 @@ class PositionManager {
   }
 
   updatePosition(pos) {
-    console.log("Trying to call it");
     this.currentPosition.setPositionFromGPS(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.timestamp);
-    // TODO - this is not the correct accuracy used here
-    this.currentPosition.setElevation(pos.coords.elevation, pos.coords.accuracy);
+    this.currentPosition.setElevation(pos.coords.altitude, pos.coords.altitudeAccuracy, pos.coords.speed);
     this.newPositionCallback(this.currentPosition);
   }
 
