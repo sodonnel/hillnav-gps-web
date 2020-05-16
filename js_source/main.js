@@ -1,10 +1,12 @@
 var LatLonSystemMapper = require('./LatLonSystemMapper.js');
 var AbstractPosition = require('./AbstractPosition.js');
 var IrishGridPosition = require('./IrishGridPosition.js');
+var UKGridPosition = require('./UKGridPosition.js');
 var PositionManager = require('./PositionManager.js');
 
 module.exports = {
   IrishGridPosition: IrishGridPosition,
+  UKGridPosition: UKGridPosition,
   PositionManager: PositionManager
 //  AbstractPosition: AbstractPosition,
 //  LatLonSystemMapper: LatLonSystemMapper

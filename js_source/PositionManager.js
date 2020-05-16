@@ -1,6 +1,7 @@
 var AbstractPosition = require('./AbstractPosition.js');
 var LatLonSystemMapper = require('./LatLonSystemMapper.js');
 var IrishGridPosition = require('./IrishGridPosition.js');
+var UKGridPosition = require('./UKGridPosition.js');
 
 class PositionManager {
 
@@ -20,7 +21,7 @@ class PositionManager {
       this.currentPosition = new IrishGridPosition({});
     } else if (system == "UK") {
       this.coordinateSystem = system;
-    //  this.currentPosition = new UKGridPosition();
+      this.currentPosition = new UKGridPosition({});
     } else {
       console.log("Invalid coordinate system specified: "+system);
     }
