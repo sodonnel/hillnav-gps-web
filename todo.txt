@@ -1,0 +1,10 @@
+* Change speed to kmph rather than m/s
+* Store the last set grid system into a cookie (or local storage) so it is used on next reload
+* Only update the grid ref location if the GPS location has moved by X meters.
+* GPS Coordinates view
+* About page
+
+* Store current location
+* Enter a location
+* Back bearing from current to stored location
+* Lighter weight Boostrap + JQuery combination.
