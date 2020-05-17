@@ -9,6 +9,7 @@ class PositionManager {
     this.currentPosition = null;
     this.coordinateSystem = null;
     this.newPositionCallback = null;
+    this.gpsPos = null;
   }
 
   setCoordinateSystem(system) {
@@ -24,7 +25,9 @@ class PositionManager {
       this.currentPosition = new UKGridPosition({});
     } else {
       console.log("Invalid coordinate system specified: "+system);
+      return;
     }
+    this.updatePosition(null);
   }
 
   setNewPositionCallback(f) {
@@ -32,9 +35,15 @@ class PositionManager {
   }
 
   updatePosition(pos) {
-    this.currentPosition.setPositionFromGPS(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.timestamp);
-    this.currentPosition.setElevation(pos.coords.altitude, pos.coords.altitudeAccuracy, pos.coords.speed);
-    this.newPositionCallback(this.currentPosition);
+    if (pos) {
+      this.gpsPos=pos;
+    }
+    if (this.gpsPos) {
+      // Only update the position if we actually have one to update it with
+      this.currentPosition.setPositionFromGPS(this.gpsPos.coords.latitude, this.gpsPos.coords.longitude, this.gpsPos.coords.accuracy, this.gpsPos.timestamp);
+      this.currentPosition.setElevation(this.gpsPos.coords.altitude, this.gpsPos.coords.altitudeAccuracy, this.gpsPos.coords.speed);
+      this.newPositionCallback(this.currentPosition);
+    }
   }
 
 }
