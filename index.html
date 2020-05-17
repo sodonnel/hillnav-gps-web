@@ -73,6 +73,8 @@
 
 
 <script>
+  var gridSystemCookieName = "gridSystem";
+  var defaultGridSystem = "Irish";
   var positionWatchID = null;
   var x = document.getElementById("demo");
   var y = document.getElementById("ref");
@@ -82,13 +84,23 @@
   var speed = document.getElementById("speed");
 
   var pm = new HillNav.PositionManager();
-  pm.setCoordinateSystem("Irish");
+  coordSystem = readCookie(gridSystemCookieName);
+  if (!coordSystem) {
+    coordSystem = defaultGridSystem;
+  }
+  setCoordinateSystem(coordSystem);
   pm.setNewPositionCallback(function(p){
     y.innerHTML = formatGridReference(p);
     accuracy.innerHTML = "Within "+ p.accuracy + " meters";
     updatePositionAge(p);
     updateElevationAndSpeed(p);
-  });  
+  });
+
+  function setCoordinateSystem(sys) {
+    pm.setCoordinateSystem(sys);
+    // TODO - need to lookup the title text as GPS will not fix in this pattern
+    $("#systemHeading").html(sys + " Grid Reference");
+  }
   
   function getLocation() {
     if (navigator.geolocation) {
@@ -148,15 +160,41 @@
     }
   }
 
+  // Simple cookie handling functions
+  function createCookie(name, value, days) {
+    if (days) {
+       var date = new Date();
+       date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+       var expires = "; expires=" + date.toGMTString();
+    } else var expires = "";
+
+    document.cookie = name + "=" + value + expires + "; path=/";
+  }
+
+  function readCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+      var c = ca[i];
+      while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  }
+
+  function eraseCookie(name) {
+    createCookie(name, "", -1);
+  }
+
   $( "#setSystemIrish" ).click(function() {
-    pm.setCoordinateSystem("Irish");
-    $("#systemHeading").html("Irish Grid Reference");
+    createCookie(gridSystemCookieName, "Irish", 700);
+    setCoordinateSystem("Irish");
     $("#navbarSupportedContent").collapse('hide');
   });
 
   $( "#setSystemUK" ).click(function() {
-    pm.setCoordinateSystem("UK");
-    $("#systemHeading").html("UK Grid Reference");
+    createCookie(gridSystemCookieName, "UK", 700);
+    setCoordinateSystem("UK");
     $("#navbarSupportedContent").collapse('hide');
   });
 
