@@ -8,5 +8,7 @@ cp cache.manifest build/
 cp touch-icon-iphone.png build/
 cp -r css build/
 
-sed -i '.bak' 's/\?123456/\?45678/g' build/index.html
-sed -i '.bak' 's/\?123456/\?45678/g' build/cache.manifest
+TIMESTAMP=`date +%s`
+
+sed -i '.bak' "s/\?123456/\?$TIMESTAMP/g" build/index.html
+sed -i '.bak' "s/\?123456/\?$TIMESTAMP/g" build/cache.manifest
