@@ -30,14 +30,14 @@
 
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Grid System
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="#" id="setSystemIrish">Irish</a>
-          <a class="dropdown-item" href="#" id="setSystemUK">UK</a>
-        </div>
+      <li class="nav-item">
+	<a class="nav-link" href="#" id="setSystemIrish">Irish Grid</a>
+      </li>
+      <li class="nav-item">
+	<a class="nav-link" href="#" id="setSystemUK">UK Grid</a>
+      </li>
+      <li class="nav-item">
+	<a class="nav-link" href="#" id="setSystemIrish">GPS Coords</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="#">About</a>
@@ -151,11 +151,13 @@
   $( "#setSystemIrish" ).click(function() {
     pm.setCoordinateSystem("Irish");
     $("#systemHeading").html("Irish Grid Reference");
+    $("#navbarSupportedContent").collapse('hide');
   });
 
   $( "#setSystemUK" ).click(function() {
     pm.setCoordinateSystem("UK");
     $("#systemHeading").html("UK Grid Reference");
+    $("#navbarSupportedContent").collapse('hide');
   });
 
   getLocation();
