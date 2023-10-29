@@ -13,10 +13,21 @@
 <link rel="apple-touch-icon-precomposed" sizes="144x144" href="touch-icon-iphone.png" />
 
 <!--    <meta name="apple-mobile-web-app-capable" content="yes">     -->
-    <meta name="apple-mobile-web-app-title" content="Hillnav GPS">
+<meta name="apple-mobile-web-app-title" content="Hillnav GPS">
+
+  <script type="importmap">
+  {
+    "imports": {
+	"AbstractPosition": "/js_source/AbstractPosition.js",
+        "LatLonSystemMapper": "/js_source/LatLonSystemMapper.js",
+        "PositionManager": "/js_source/PositionManager.js",
+        "IrishGridPosition": "/js_source/irishGridPosition.js",
+        "UKGridPosition": "/js_source/UKGridPosition.js"
+    }
+  }
+  </script>
 
     <script src="/js/jquery-3.3.1.slim.min.js?123456"></script>
-    <script src="/js/app.js?123456"></script>
     <link rel="stylesheet" href="/css/bootstrap.min.css?123456">
     <script src="/js/bootstrap.min.js?123456"></script>
   </head>
@@ -71,8 +82,9 @@
 
 <!-- <a href="#" onClick="window.applicationCache.update();">Check for updates</a> -->
 
+<script type="module">
+  import PositionManager from 'PositionManager';
 
-<script>
   var gridSystemCookieName = "gridSystem";
   var defaultGridSystem = "Irish";
   var positionWatchID = null;
@@ -83,8 +95,8 @@
   var elevation = document.getElementById("elevation");
   var speed = document.getElementById("speed");
 
-  var pm = new HillNav.PositionManager();
-  coordSystem = readCookie(gridSystemCookieName);
+  var pm = new PositionManager();
+  var coordSystem = readCookie(gridSystemCookieName);
   if (!coordSystem) {
     coordSystem = defaultGridSystem;
   }
@@ -98,7 +110,7 @@
 
   function setCoordinateSystem(sys) {
     pm.setCoordinateSystem(sys);
-    // TODO - need to lookup the title text as GPS will not fix in this pattern
+    // TODO - need to lookup the title text as GPS will not fit in this pattern
     $("#systemHeading").html(sys + " Grid Reference");
   }
   
@@ -152,9 +164,9 @@
     console.log("Unable to get the geolocation position. Error code is: "+e.code);
     console.log("The error message is: "+e.message);
     if (e.code == 1) {
-      alert("The browser denied location access");
+      alert("The browser denied location access. On Mac OS and OS X ensure location services are enabled in System Preferences -> Security and Privacy");
     } else if (e.code == 2) {
-      alert("The position is unavailable");
+      alert("The position is unavailable. On Mac OS and OS X ensure location services are enabled in System Preferences -> Security and Privacy");
     } else if (e.code == 3) {
       alert("Unable to get the position within the timeout");
     }
@@ -168,7 +180,7 @@
        var expires = "; expires=" + date.toGMTString();
     } else var expires = "";
 
-    document.cookie = name + "=" + value + expires + "; path=/";
+    document.cookie = name + "=" + value + expires + "; SameSite=Strict; path=/";
   }
 
   function readCookie(name) {

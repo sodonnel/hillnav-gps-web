@@ -1,7 +1,7 @@
-var AbstractPosition = require('./AbstractPosition.js');
-var LatLonSystemMapper = require('./LatLonSystemMapper.js');
-var IrishGridPosition = require('./IrishGridPosition.js');
-var UKGridPosition = require('./UKGridPosition.js');
+import AbstractPosition from 'AbstractPosition';
+import LatLonSystemMapper from 'LatLonSystemMapper';
+import IrishGridPosition from 'IrishGridPosition';
+import UKGridPosition from 'UKGridPosition';
 
 class PositionManager {
 
@@ -48,7 +48,5 @@ class PositionManager {
 
 }
 
+export default PositionManager;
 
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-   module.exports = PositionManager;
-}

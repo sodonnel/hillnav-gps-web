@@ -94,7 +94,4 @@ class LatLonSystemMapper {
     
 }
 
-
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = LatLonSystemMapper;
-}
+export default LatLonSystemMapper;

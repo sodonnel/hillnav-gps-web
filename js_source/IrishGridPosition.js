@@ -1,5 +1,5 @@
-var AbstractPosition = require('./AbstractPosition.js');
-var LatLonSystemMapper = require('./LatLonSystemMapper.js');
+import AbstractPosition from 'AbstractPosition';
+import LatLonSystemMapper from 'LatLonSystemMapper';
 
 class IrishGridPosition extends AbstractPosition {
   constructor(params) {
@@ -103,7 +103,5 @@ class IrishGridPosition extends AbstractPosition {
   
 }
 
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-   module.exports = IrishGridPosition;
-}
+export default IrishGridPosition;
 
