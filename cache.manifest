@@ -11,8 +11,12 @@ CACHE MANIFEST
 CACHE:
 
 index.html
+js/AbstractPosition.js?123456"
+js/LatLonSystemMapper.js?123456"
+js/PositionManager.js?123456"
+js/IrishGridPosition.js?123456"
+js/UKGridPosition.js?123456"
 js/jquery-3.3.1.slim.min.js?123456
-js/app.js?123456
 js/bootstrap.min.js?123456
 css/bootstrap.min.css?123456
 touch-icon-iphone.png?123456
