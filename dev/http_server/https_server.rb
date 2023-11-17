@@ -15,7 +15,7 @@ server = WEBrick::HTTPServer.new(:Port => 8000,
                                  :SSLEnable => true,
                                  :SSLCertificate => cert,
                                  :SSLPrivateKey => pkey,
-                                 :DocumentRoot => Dir::pwd)
+                                 :DocumentRoot => "#{__dir__}/../..")
 
 trap 'INT' do server.shutdown end
 
