@@ -1,32 +1,38 @@
 <!doctype html>
-<html lang="en" manifest="/cache.manifest">
+<html lang="en">
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="images/touch-icon-iphone.png">
+
+<!--
     <link rel="apple-touch-icon" href="images/touch-icon-iphone.png?123456" />
 
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="images/touch-icon-iphone.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/touch-icon-iphone.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/touch-icon-iphone.png" />
     <link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/touch-icon-iphone.png" />
-    <link rel="icon" type="image/x-icon" href="images/touch-icon-iphone.png">
 
-    <!--    <meta name="apple-mobile-web-app-capable" content="yes">     -->
     <meta name="apple-mobile-web-app-title" content="Hillnav GPS">
+-->
+    <!--    <meta name="apple-mobile-web-app-capable" content="yes">     -->
 
-  <script type="importmap">
-  {
-    "imports": {
-	"AbstractPosition": "/js/AbstractPosition.js",
-        "LatLonSystemMapper": "/js/LatLonSystemMapper.js",
+
+    <script src="js/registersw.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+	    "AbstractPosition": "/js/AbstractPosition.js?123",
+        "LatLonSystemMapper": "/js/LatLonSystemMapper.js?123",
         "PositionManager": "/js/PositionManager.js",
         "IrishGridPosition": "/js/IrishGridPosition.js",
         "UKGridPosition": "/js/UKGridPosition.js"
+      }
     }
-  }
-  </script>
+    </script>
 
     <script src="/js/jquery-3.3.1.slim.min.js?123456"></script>
     <link rel="stylesheet" href="/css/bootstrap.min.css?123456">
