@@ -1,9 +1,9 @@
-const cacheName = "hillnavgps-v8";
+const cacheName = "hillnavgps-CACHEBUST";
 
 const addResourcesToCache = async () => {
     try {
         console.log("Downloading cache manifest");
-        const cacheRequest = await fetch("cache_manifest.json");
+        const cacheRequest = await fetch("cache_manifest.json?CACHEBUST");
         const toCache = await cacheRequest.json();
         const cache = await caches.open(cacheName);
         console.log("Service worker adding resources to cache");
@@ -47,7 +47,10 @@ self.addEventListener("update", (event) => {
 })
 
 const cacheMatch = async (request) => {
-    const cachedResponse = await caches.match(request);
+//    const cachedResponse = await caches.match(request);
+    const cachedResponse = await caches.open(cacheName).then(function (cache) {
+        return cache.match(request)
+    });
     if (cachedResponse) return cachedResponse;
     const networkResponse = await fetch(request);
     const cache = await caches.open(cacheName);
