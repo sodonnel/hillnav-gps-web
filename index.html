@@ -7,7 +7,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/x-icon" href="images/touch-icon-iphone.png?CACHEBUST">
 
-    <script src="js/registersw.js?CACHEBUST"></script>
+
+   <!-- <script src="js/registersw.js?CACHEBUST"></script> -->
     <script type="importmap">
     {
       "imports": {
@@ -51,7 +52,6 @@
 </nav>
   
 <div class="container" style="margin-top: 30px;">
-
   <div class="card">
     <div class="card-header" style="font-weight: bold; font-size: 15pt;" id="systemHeading">
       Irish Grid Position
@@ -73,143 +73,11 @@
       <p class="card-text" style="font-size: 12pt;" id="version">CACHEBUST</p>
     </div>
   </div>
-
 </div>
 
 <!-- <a href="#" onClick="window.applicationCache.update();">Check for updates</a> -->
 
-<script type="module">
-  import PositionManager from 'PositionManager';
-
-  var gridSystemCookieName = "gridSystem";
-  var defaultGridSystem = "Irish";
-  var positionWatchID = null;
-  var x = document.getElementById("demo");
-  var y = document.getElementById("ref");
-  var accuracy = document.getElementById("accuracy");
-  var ts = document.getElementById("ts");
-  var elevation = document.getElementById("elevation");
-  var speed = document.getElementById("speed");
-
-  var pm = new PositionManager();
-  var coordSystem = readCookie(gridSystemCookieName);
-  if (!coordSystem) {
-    coordSystem = defaultGridSystem;
-  }
-  setCoordinateSystem(coordSystem);
-  pm.setNewPositionCallback(function(p){
-    y.innerHTML = formatGridReference(p);
-    accuracy.innerHTML = "Within "+ p.accuracy + " meters";
-    updatePositionAge(p);
-    updateElevationAndSpeed(p);
-  });
-
-  function setCoordinateSystem(sys) {
-    pm.setCoordinateSystem(sys);
-    // TODO - need to lookup the title text as GPS will not fit in this pattern
-    $("#systemHeading").html(sys + " Grid Reference");
-  }
-  
-  function getLocation() {
-    if (navigator.geolocation) {
-      if (positionWatchID != null) {
-	navigator.geolocation.clearWatch(positionWatchID);
-      }
-      // maximumAge is supposed to be milli-seconds. So 1 minute is 60000
-      positionWatchID = navigator.geolocation.watchPosition(pm.updatePosition.bind(pm), errorHandler, {enableHighAccuracy: true, maximumAge: 60000, timeout:300000});
-    } else { 
-        x.innerHTML = "Geolocation is not supported by this browser.";
-    }
-  }
-
-  function updatePositionAge(pos) {
-    if (!pos) {
-      return;
-    }
-    var d = new Date();
-    var now = d.getTime();
-    var age = Math.floor((now - pos.timestamp) / 1000)
-    if (age > 60) {
-      getLocation();
-    }
-    ts.innerHTML = "Position updated "+age+" seconds ago"
-  }
-
-  function formatGridReference(pos) {
-    return pos.gridSquare+" "+
-      pos.majorEasting()+
-      "<div style=\"display:inline; font-size: 20px\">"+pos.minorEasting()+"</div>&nbsp;&nbsp;"+
-      pos.majorNorthing()+
-      "<div style=\"display:inline; font-size: 20px\">"+pos.minorNorthing()+"</div>";
-  }
-
-  function updateElevationAndSpeed(p) {
-    if (p.elevation != null) {
-      elevation.innerHTML = "Elevation: "+Math.round(p.elevation)+"m (within  "+Math.round(p.elevationAccuracy)+"m)";
-    } else {
-      elevation.innerHTML = "Elevation: unavailable";
-    }
-    if (p.speed != null) {
-      speed.innerHTML = "Speed: "+Math.round(p.speed)+" m/s";
-    } else {
-      speed.innerHTML = "Speed: unavailable";
-    }
-  }
-  
-  function errorHandler(e) {
-    console.log("Unable to get the geolocation position. Error code is: "+e.code);
-    console.log("The error message is: "+e.message);
-    if (e.code == 1) {
-      alert("The browser denied location access. On Mac OS and OS X ensure location services are enabled in System Preferences -> Security and Privacy");
-    } else if (e.code == 2) {
-      alert("The position is unavailable. On Mac OS and OS X ensure location services are enabled in System Preferences -> Security and Privacy");
-    } else if (e.code == 3) {
-      alert("Unable to get the position within the timeout");
-    }
-  }
-
-  // Simple cookie handling functions
-  function createCookie(name, value, days) {
-    if (days) {
-       var date = new Date();
-       date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-       var expires = "; expires=" + date.toGMTString();
-    } else var expires = "";
-
-    document.cookie = name + "=" + value + expires + "; SameSite=Strict; path=/";
-  }
-
-  function readCookie(name) {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-      var c = ca[i];
-      while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-      if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-  }
-
-  function eraseCookie(name) {
-    createCookie(name, "", -1);
-  }
-
-  $( "#setSystemIrish" ).click(function() {
-    createCookie(gridSystemCookieName, "Irish", 700);
-    setCoordinateSystem("Irish");
-    $("#navbarSupportedContent").collapse('hide');
-  });
-
-  $( "#setSystemUK" ).click(function() {
-    createCookie(gridSystemCookieName, "UK", 700);
-    setCoordinateSystem("UK");
-    $("#navbarSupportedContent").collapse('hide');
-  });
-
-  getLocation();
-
-  var timer = setInterval(updatePositionAge, 10000, pm.currentPosition);
-</script>
+<script type="module" src="js/HillNav.js" ></script>
 
 </body>
 </html>
