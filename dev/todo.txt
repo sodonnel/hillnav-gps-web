@@ -7,3 +7,16 @@
 * Enter a location
 * Back bearing from current to stored location
 * Lighter weight Boostrap + JQuery combination.
+
+
+
+Non webapps (saved on home screen) have the SW and all data deleted after 7 days of non-interaction with the site:
+
+https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/
+
+
+EU devices will not be able to have full webapps installed on the home screen:
+
+https://developer.apple.com/support/dma-and-apps-in-the-eu#dev-qa
+
+See section Why Don't Users in the EU have access to Home Screen web apps?
