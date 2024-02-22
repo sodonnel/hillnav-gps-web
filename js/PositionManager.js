@@ -17,10 +17,13 @@ class PositionManager {
       return;
     }
     
-    if (system == "Irish") {
+    if (system === "Irish") {
       this.coordinateSystem = system;
       this.currentPosition = new IrishGridPosition({});
-    } else if (system == "UK") {
+    } else if (system === "UK") {
+      this.coordinateSystem = system;
+      this.currentPosition = new UKGridPosition({});
+    } else if (system === "GPS") {
       this.coordinateSystem = system;
       this.currentPosition = new UKGridPosition({});
     } else {

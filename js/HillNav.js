@@ -2,12 +2,12 @@ import PositionManager from 'PositionManager';
 
 const GRID_SYSTEM_COOOKIE_NAME = "gridSystem";
 const DEFAULT_GRID_SYSTEM = "Irish";
-var x = document.getElementById("demo");
-var y = document.getElementById("ref");
-var accuracy = document.getElementById("accuracy");
-var ts = document.getElementById("ts");
-var elevation = document.getElementById("elevation");
-var speed = document.getElementById("speed");
+var gridRef = $("#ref");
+var gpsPos = $("#gpsPos");
+var accuracy = $("#accuracy");
+var ts = $("#ts");
+var elevation = $("#elevation");
+var speed = $("#speed");
 
 class HillNav {
 
@@ -18,8 +18,9 @@ class HillNav {
         }
         let pm = new PositionManager();
         pm.setNewPositionCallback((p) => {
-            y.innerHTML = formatGridReference(p);
-            accuracy.innerHTML = "Within "+ p.accuracy + " meters";
+            gridRef.html(formatGridReference(p));
+            gpsPos.html(formatGPSPosition(p));
+            accuracy.html("Within "+ p.accuracy + " meters");
             this.updatePositionAge(p);
             this.updateElevationAndSpeed(p);
         });
@@ -37,8 +38,15 @@ class HillNav {
 
     setCoordinateSystem(sys) {
         this.positionManager.setCoordinateSystem(sys);
-        // TODO - need to lookup the title text as GPS will not fit in this pattern
-        $("#systemHeading").html(sys + " Grid Reference");
+        if (sys === "GPS") {
+            gridRef.hide();
+            gpsPos.show();
+            $("#systemHeading").html("GPS Coordinates");
+        } else {
+            gridRef.show();
+            gpsPos.hide();
+            $("#systemHeading").html(sys + " Grid Reference");
+        }
     }
 
     getLocation() {
@@ -64,19 +72,19 @@ class HillNav {
         if (age > 60) {
             this.getLocation();
         }
-        ts.innerHTML = "Position updated "+age+" seconds ago"
+        ts.html("Position updated "+age+" seconds ago");
     }
 
     updateElevationAndSpeed(p) {
         if (p.elevation != null) {
-            elevation.innerHTML = "Elevation: "+Math.round(p.elevation)+"m (within  "+Math.round(p.elevationAccuracy)+"m)";
+            elevation.html("Elevation: "+Math.round(p.elevation)+"m (within  "+Math.round(p.elevationAccuracy)+"m)");
         } else {
-            elevation.innerHTML = "Elevation: unavailable";
+            elevation.html("Elevation: unavailable");
         }
         if (p.speed != null) {
-            speed.innerHTML = "Speed: "+Math.round(p.speed)+" m/s";
+            speed.html("Speed: "+Math.round(p.speed)+" m/s");
         } else {
-            speed.innerHTML = "Speed: unavailable";
+            speed.html("Speed: unavailable");
         }
     }
 }
@@ -87,6 +95,10 @@ function formatGridReference(pos) {
         "<div style=\"display:inline; font-size: 20px\">"+pos.minorEasting()+"</div>&nbsp;&nbsp;"+
         pos.majorNorthing()+
         "<div style=\"display:inline; font-size: 20px\">"+pos.minorNorthing()+"</div>";
+}
+
+function formatGPSPosition(pos) {
+    return "Lat: "+pos.gpsLatitude+"&nbsp;&nbsp;Lon: "+pos.gpsLongitude;
 }
 
 function errorHandler(e) {
@@ -138,6 +150,12 @@ $( "#setSystemIrish" ).click(function() {
 $( "#setSystemUK" ).click(function() {
     createCookie(GRID_SYSTEM_COOOKIE_NAME, "UK", 700);
     hillNav.setCoordinateSystem("UK");
+    $("#navbarSupportedContent").collapse('hide');
+});
+
+$( "#setSystemGPS" ).click(function() {
+    createCookie(GRID_SYSTEM_COOOKIE_NAME, "GPS", 700);
+    hillNav.setCoordinateSystem("GPS");
     $("#navbarSupportedContent").collapse('hide');
 });
 

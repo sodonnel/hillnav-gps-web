@@ -33,6 +33,14 @@ class AbstractPosition {
     this.speed = speed;
   }
 
+  gpsLatitude() {
+    return this.gpsLatitude;
+  }
+
+  gpsLongitude() {
+    return this.gpsLongitude;
+  }
+
   minorEasting() {
     return (this.gridEasting % 100).toString().padStart(2, "0");
   }
