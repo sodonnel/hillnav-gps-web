@@ -40,10 +40,10 @@ node --import ./dev/test/register.mjs dev/test/gridtest.mjs
 
 ## Running the browser tests
 
-The service worker, the Keep Screen On option and the saved settings are tested in headless
-Chromium using Playwright. This also needs only Docker, but pulls the `ruby:3.3-alpine` image and
-the much larger Playwright image (about 2GB) the first time, and installs the `playwright` npm
-package on each run. From the root of the repo run:
+The service worker, the Keep Screen On option, the saved settings and the location error messages
+are tested in headless Chromium using Playwright. This also needs only Docker, but pulls the
+`ruby:3.3-alpine` image and the much larger Playwright image (about 2GB) the first time, and
+installs the `playwright` npm package on each run. From the root of the repo run:
 
 ```sh
 dev/test/run_browser_tests.sh
@@ -75,12 +75,19 @@ are no errors. It then replaces the API with a fake that counts active locks, an
 - turning it off releases the lock, including when it is turned on and off again before the
   request completes
 
-Finally it runs `dev/test/settingstest.mjs` against the first build, which checks:
+It then runs `dev/test/settingstest.mjs` against the first build, which checks:
 
 - a new user gets the Irish grid and Keep Screen On off, and nothing is saved until they choose
 - choices are saved in `localStorage`, not cookies, and survive a reload
 - settings saved in cookies by earlier versions are applied, moved to `localStorage`, and the
   cookies removed
+
+Finally it runs `dev/test/locationtest.mjs` against the first build, which checks:
+
+- when location permission is denied, a message is shown in the card and no alert pops up
+- once permission is granted and the app comes back to the foreground, the position is shown and
+  the message cleared
+- in a browser without geolocation, a message is shown instead of the page failing
 
 These tests run in Chromium, not iOS Safari, so they are not a substitute for trying a build on an
 iPhone.

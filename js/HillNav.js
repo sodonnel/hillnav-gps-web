@@ -9,6 +9,7 @@ var accuracy = $("#accuracy");
 var ts = $("#ts");
 var elevation = $("#elevation");
 var speed = $("#speed");
+var locationError = $("#locationError");
 // Values greyed out when the position is stale
 var positionValues = $("#ref, #gpsPos, #accuracy, #elevation, #speed");
 // A position older than this many seconds is shown as stale
@@ -23,6 +24,7 @@ class HillNav {
         }
         let pm = new PositionManager();
         pm.setNewPositionCallback((p) => {
+            locationError.prop("hidden", true);
             gridRef.html(formatGridReference(p));
             gpsPos.html(formatGPSPosition(p));
             accuracy.html("Within "+ p.accuracy + " meters");
@@ -178,9 +180,9 @@ class HillNav {
             // maximumAge of 0 stops the browser handing back a cached position, which on
             // iOS can be from before the app was suspended.
             this.positionWatchID = navigator.geolocation.watchPosition(this.positionManager.updatePosition.bind(this.positionManager),
-                errorHandler, {enableHighAccuracy: true, maximumAge: 0, timeout:300000});
+                showLocationError, {enableHighAccuracy: true, maximumAge: 0, timeout:300000});
         } else {
-            x.innerHTML = "Geolocation is not supported by this browser.";
+            locationError.html("This browser cannot provide your location.").prop("hidden", false);
         }
     }
 
@@ -238,16 +240,21 @@ function formatGPSPosition(pos) {
     return "Lat: "+pos.gpsLatitude+"&nbsp;&nbsp;Lon: "+pos.gpsLongitude;
 }
 
-function errorHandler(e) {
-    console.log("Unable to get the geolocation position. Error code is: "+e.code);
-    console.log("The error message is: "+e.message);
-    if (e.code == 1) {
-        alert("The browser denied location access. On Mac OS and OS X ensure location services are enabled in System Preferences -> Security and Privacy");
-    } else if (e.code == 2) {
-        alert("The position is unavailable. On Mac OS and OS X ensure location services are enabled in System Preferences -> Security and Privacy");
-    } else if (e.code == 3) {
-        alert("Unable to get the position within the timeout");
+// Errors are shown in the card rather than with alert(), which blocks the app, and are cleared
+// when the next position arrives. The watch is restarted while waiting for a first fix and
+// when the app returns to the foreground, so it recovers if location is allowed later.
+function showLocationError(e) {
+    console.log("Unable to get the geolocation position. Error code is: "+e.code+", message: "+e.message);
+    let message;
+    if (e.code == e.PERMISSION_DENIED) {
+        message = "Location access is not allowed. On iPhone, check Settings > Privacy & Security > "+
+            "Location Services is on, and that Safari Websites is set to allow location.";
+    } else if (e.code == e.POSITION_UNAVAILABLE) {
+        message = "Your position is unavailable. Check that Location Services is turned on.";
+    } else {
+        message = "Still waiting for a GPS fix. This can take longer indoors or under heavy cover.";
     }
+    locationError.html(message).prop("hidden", false);
 }
 
 // Settings are kept in localStorage. Earlier versions used cookies, so a setting still in a
