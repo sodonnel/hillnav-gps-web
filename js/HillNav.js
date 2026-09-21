@@ -30,6 +30,7 @@ class HillNav {
         });
         this.positionManager = pm;
         this.positionWatchID = null;
+        this.watchStartTime = Date.now();
         this.setCoordinateSystem(coordSystem);
     }
 
@@ -89,6 +90,7 @@ class HillNav {
     getLocation() {
         if (navigator.geolocation) {
             this.stopLocation();
+            this.watchStartTime = Date.now();
             // maximumAge of 0 stops the browser handing back a cached position, which on
             // iOS can be from before the app was suspended.
             this.positionWatchID = navigator.geolocation.watchPosition(this.positionManager.updatePosition.bind(this.positionManager),
@@ -104,6 +106,13 @@ class HillNav {
         }
         var d = new Date();
         var now = d.getTime();
+        if (position.timestamp == null) {
+            // No fix received yet. Report how long the current watch has been waiting,
+            // so the caller can restart it if nothing ever arrives.
+            var waiting = Math.floor((now - this.watchStartTime) / 1000);
+            ts.html("Waiting for location for "+waiting+" seconds");
+            return waiting;
+        }
         var age = Math.floor((now - position.timestamp) / 1000)
         var stale = age > STALE_AGE_SECONDS;
         positionValues.toggleClass("text-muted", stale);
