@@ -1,34 +1,27 @@
 require 'fileutils'
+require 'json'
 
-base = "#{__dir__}/.."
+base = File.expand_path("..", __dir__)
 build_id = Time.now.strftime("%Y%m%d%H%M%S")
 build_dir = File.join(base, "build", build_id)
-dirs = %W[js css images]
-globs = %W[#{base}/*.html #{base}/manifest.json #{base}/sw.js]
+globs = %W[*.html manifest.json sw.js js/**/* css/**/* images/**/*]
 
-Dir.mkdir(build_dir)
-dirs.each do |dir|
-  Dir.mkdir(File.join(build_dir, dir))
-  globs << "#{base}/#{dir}/**/*"
+files = Dir.chdir(base) { Dir.glob(globs).select { |f| File.file?(f) }.sort }
+
+files.each do |file|
+  dest = File.join(build_dir, file)
+  FileUtils.mkdir_p(File.dirname(dest))
+  FileUtils.copy(File.join(base, file), dest)
 end
 
-File.open(File.join(build_dir, "cache_manifest.json"), "w") do |fh|
-  fh.puts("[")
-  first = true
-  Dir.glob(globs) do |file|
-    file.gsub!("#{base}/", '')
-    FileUtils.copy(File.join(base, file), File.join(build_dir, file))
-    next if file =~ /^sw\.js$/
-    fh.puts(",") unless first
-    first = false
-    fh.print("  \"#{file}?#{build_id}\"")
-  end
-  fh.puts("\n]")
-end
+# The files the service worker precaches. It ignores query strings, so these are plain paths.
+# sw.js itself is never cached by the service worker.
+File.write(File.join(build_dir, "cache_manifest.json"),
+           JSON.pretty_generate(files - %w[sw.js]) + "\n")
 
 %w[index.html sw.js manifest.json].each do |file|
-  system("sed -i '.bak' \"s/CACHEBUST/#{build_id}/g\" #{build_dir}/#{file}")
-  File.delete("#{build_dir}/#{file}.bak")
+  path = File.join(build_dir, file)
+  File.write(path, File.read(path).gsub("CACHEBUST", build_id))
 end
 
 puts "Build #{build_id} complete"

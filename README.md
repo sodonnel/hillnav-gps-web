@@ -3,6 +3,10 @@
 A progressive web app that uses a phone's GPS to show the current location as an Irish Grid or UK
 (Ordnance Survey) grid reference, or as GPS latitude and longitude.
 
+## Development
+
+For local development: Serving the repo root without building means cache_manifest.json won't exist. The service worker install will then fail and nothing gets cached. That's convenient while developing, but it will log an error in the console. To test offline behaviour, serve a build with ruby dev/http_server/https_server.rb build/<id>.
+
 ## Running the tests
 
 The tests need only Docker. They run in the `node:22-alpine` image, which is pulled the first time.
