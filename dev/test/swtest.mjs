@@ -1,33 +1,15 @@
 // Browser test of the service worker: first install, offline load, and update between two builds.
 // Run with dev/test/run_browser_tests.sh - see README.md.
 // Usage: node swtest.mjs <build A dir> <build B dir>, where build B is newer than build A
-import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { startServer, check, finish } from './browser_helpers.mjs';
 
 const [buildA, buildB] = process.argv.slice(2);
 const idA = path.basename(buildA), idB = path.basename(buildB);
 const precacheCount = (build) => JSON.parse(fs.readFileSync(path.join(build, 'cache_manifest.json'))).length;
-let root = buildA;
-
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png' };
-const server = http.createServer((req, res) => {
-  const p = new URL(req.url, 'http://localhost').pathname;
-  const file = path.join(root, p === '/' ? '/index.html' : p);
-  fs.readFile(file, (err, data) => {
-    if (err) { res.writeHead(404); res.end(); return; }
-    res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' });
-    res.end(data);
-  });
-});
-await new Promise((r) => server.listen(8080, r));
-
-let failures = 0;
-function check(name, cond, detail) {
-  console.log((cond ? 'PASS ' : 'FAIL ') + name + (detail !== undefined ? '  -> ' + detail : ''));
-  if (!cond) failures++;
-}
+const site = await startServer(buildA);
 
 const browser = await chromium.launch();
 const context = await browser.newContext({
@@ -86,7 +68,7 @@ check('Offline load of /index.html: app loads', await version() === idA, await v
 await context.setOffline(false);
 
 // Update to build B, triggered by the app coming back to the foreground
-root = buildB;
+site.root = buildB;
 await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
 await page.waitForFunction(() => !document.querySelector('#updateBanner').hidden, null, { timeout: 15000 });
 check('Update: banner shown after foreground update check', await bannerVisible());
@@ -101,6 +83,4 @@ check('Update: only build B cache remains, fully precached', JSON.stringify(cach
 check('No page errors, console errors or alerts', errors.length === 0, errors.join(' | '));
 
 await browser.close();
-server.close();
-console.log(failures === 0 ? '\nAll checks passed' : '\n' + failures + ' check(s) failed');
-process.exit(failures === 0 ? 0 : 1);
+finish(site);

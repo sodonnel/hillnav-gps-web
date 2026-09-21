@@ -40,7 +40,7 @@ docker run --rm -v "$PWD/dev/test":/tests:ro -v "$builds":/builds:ro \
   cd /tmp
   npm init -y > /dev/null
   npm install --silent --no-audit --no-fund playwright@$PLAYWRIGHT_VERSION
-  cp /tests/swtest.mjs /tests/wakelocktest.mjs /tests/settingstest.mjs /tests/locationtest.mjs .
+  cp /tests/*.mjs .
   node swtest.mjs /builds/$1 /builds/$2
   echo
   node wakelocktest.mjs /builds/$1

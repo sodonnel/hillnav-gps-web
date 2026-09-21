@@ -2,29 +2,10 @@
 // cleared when a position arrives, and of the elevation and speed display.
 // Run with dev/test/run_browser_tests.sh - see README.md.
 // Usage: node locationtest.mjs <build dir>
-import http from 'node:http';
-import fs from 'node:fs';
-import path from 'node:path';
 import { chromium } from 'playwright';
+import { startServer, check, finish } from './browser_helpers.mjs';
 
-const root = process.argv[2];
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png' };
-const server = http.createServer((req, res) => {
-  const p = new URL(req.url, 'http://localhost').pathname;
-  const file = path.join(root, p === '/' ? '/index.html' : p);
-  fs.readFile(file, (err, data) => {
-    if (err) { res.writeHead(404); res.end(); return; }
-    res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' });
-    res.end(data);
-  });
-});
-await new Promise((r) => server.listen(8080, r));
-
-let failures = 0;
-function check(name, cond, detail) {
-  console.log((cond ? 'PASS ' : 'FAIL ') + name + (detail !== undefined ? '  -> ' + detail : ''));
-  if (!cond) failures++;
-}
+const site = await startServer(process.argv[2]);
 
 const browser = await chromium.launch();
 const newPage = async (context) => {
@@ -103,6 +84,4 @@ check('Elevation and speed: no alerts or page errors', page.errors.length === 0,
 await context.close();
 
 await browser.close();
-server.close();
-console.log(failures === 0 ? '\nAll checks passed' : '\n' + failures + ' check(s) failed');
-process.exit(failures === 0 ? 0 : 1);
+finish(site);

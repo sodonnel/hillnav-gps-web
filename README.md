@@ -97,5 +97,8 @@ Finally it runs `dev/test/locationtest.mjs` against the first build, which check
 The elevation and speed checks use a fake geolocation, as Chromium's cannot set an altitude or
 speed.
 
+The browser tests share a small web server and the `PASS`/`FAIL` check helpers in
+`dev/test/browser_helpers.mjs`.
+
 These tests run in Chromium, not iOS Safari, so they are not a substitute for trying a build on an
 iPhone.
