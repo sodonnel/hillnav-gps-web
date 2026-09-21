@@ -10,6 +10,7 @@ var ts = $("#ts");
 var elevation = $("#elevation");
 var speed = $("#speed");
 var locationError = $("#locationError");
+var wakeLockHint = $("#wakeLockHint");
 // Values greyed out when the position is stale or inaccurate. The accuracy line is styled
 // separately, as it is red when the accuracy is low.
 var positionValues = $("#ref, #gpsPos, #elevation, #speed");
@@ -52,6 +53,11 @@ class HillNav {
             $("#keepScreenOnItem").prop("hidden", false);
             this.updateKeepScreenOnLabel();
             this.requestWakeLock();
+            // Safari only grants a wake lock during a user gesture, so the requests on load and on
+            // returning to the foreground fail there. Try again on the next tap.
+            for (let type of ["pointerup", "touchend"]) {
+                document.addEventListener(type, () => this.requestWakeLock(), {capture: true, passive: true});
+            }
         }
         setInterval(() => {
             this.updatePositionAge(this.positionManager.currentPosition);
@@ -87,9 +93,12 @@ class HillNav {
         this.keepScreenOn = on;
         if (on) {
             this.requestWakeLock();
-        } else if (this.wakeLock) {
-            this.wakeLock.release();
-            this.wakeLock = null;
+        } else {
+            if (this.wakeLock) {
+                this.wakeLock.release();
+                this.wakeLock = null;
+            }
+            wakeLockHint.prop("hidden", true);
         }
         this.updateKeepScreenOnLabel();
     }
@@ -117,9 +126,14 @@ class HillNav {
                 }
             });
             this.wakeLock = lock;
+            wakeLockHint.prop("hidden", true);
         } catch (e) {
-            // For example in low power mode. The setting stays on and is retried on resume.
+            // Safari refuses without a user gesture, and browsers can refuse in low power mode. The
+            // setting stays on, and the hint asks for the tap that retries it.
             console.log("Unable to keep the screen on: "+e.name+": "+e.message);
+            if (this.keepScreenOn) {
+                wakeLockHint.prop("hidden", false);
+            }
         } finally {
             this.wakeLockPending = false;
         }

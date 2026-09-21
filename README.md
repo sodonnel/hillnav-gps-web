@@ -41,10 +41,10 @@ node --import ./dev/test/register.mjs dev/test/gridtest.mjs
 ## Running the browser tests
 
 The service worker, the Keep Screen On option, the saved settings, the location error messages
-and the elevation, speed and accuracy display are tested in headless Chromium using Playwright.
-This also needs only Docker, but pulls the `ruby:3.3-alpine` image and the much larger Playwright
-image (about 2GB) the first time, and installs the `playwright` npm package on each run. From the
-root of the repo run:
+and the elevation, speed and accuracy display are tested in headless Chromium using Playwright,
+with the Keep Screen On option also tested in WebKit. This also needs only Docker, but pulls the
+`ruby:3.3-alpine` image and the much larger Playwright image (about 2GB) the first time, and
+installs the `playwright` npm package on each run. From the root of the repo run:
 
 ```sh
 dev/test/run_browser_tests.sh
@@ -79,6 +79,13 @@ are no errors. It then replaces the API with a fake that counts active locks, an
 - turning it off releases the lock, including when it is turned on and off again before the
   request completes
 
+Safari only grants a wake lock during a user gesture such as a tap, so the requests the app makes
+on load and when it comes back to the foreground are refused there. The test repeats the checks
+with a fake that refuses requests outside a real tap or click, and checks that the app then shows a
+"Tap anywhere to keep the screen on" hint, that the next tap gets the lock and hides it, and that
+turning the option off hides it. It then checks the same reload-and-tap behaviour in Playwright's
+real WebKit, which refuses wake locks outside a gesture in the same way.
+
 It then runs `dev/test/settingstest.mjs` against the first build, which checks:
 
 - a new user gets the Irish grid and Keep Screen On off, and nothing is saved until they choose
@@ -108,5 +115,5 @@ altitude or speed.
 The browser tests share a small web server and the `PASS`/`FAIL` check helpers in
 `dev/test/browser_helpers.mjs`.
 
-These tests run in Chromium, not iOS Safari, so they are not a substitute for trying a build on an
-iPhone.
+These tests run in Chromium and WebKit on Linux, not iOS Safari, so they are not a substitute for
+trying a build on an iPhone.
