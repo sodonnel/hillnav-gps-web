@@ -32,8 +32,31 @@ class HillNav {
     run() {
         this.getLocation();
         setInterval(() => {
-            this.updatePositionAge(this.positionManager.currentPosition)
+            let age = this.updatePositionAge(this.positionManager.currentPosition);
+            if (age > 60) {
+                this.getLocation();
+            }
         }, 10000);
+        // iOS suspends the page when it is backgrounded or the screen locks, and the
+        // position watch is often dead when it comes back. Stop watching while hidden
+        // and restart the watch as soon as the page is visible again.
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                this.resume();
+            } else {
+                this.stopLocation();
+            }
+        });
+        window.addEventListener("pageshow", (e) => {
+            if (e.persisted) {
+                this.resume();
+            }
+        });
+    }
+
+    resume() {
+        this.getLocation();
+        this.updatePositionAge(this.positionManager.currentPosition);
     }
 
     setCoordinateSystem(sys) {
@@ -49,11 +72,16 @@ class HillNav {
         }
     }
 
+    stopLocation() {
+        if (this.positionWatchID != null) {
+            navigator.geolocation.clearWatch(this.positionWatchID);
+            this.positionWatchID = null;
+        }
+    }
+
     getLocation() {
         if (navigator.geolocation) {
-            if (this.positionWatchID != null) {
-                navigator.geolocation.clearWatch(this.positionWatchID);
-            }
+            this.stopLocation();
             // maximumAge is supposed to be milli-seconds. So 1 minute is 60000
             this.positionWatchID = navigator.geolocation.watchPosition(this.positionManager.updatePosition.bind(this.positionManager),
                 errorHandler, {enableHighAccuracy: true, maximumAge: 60000, timeout:300000});
@@ -69,10 +97,8 @@ class HillNav {
         var d = new Date();
         var now = d.getTime();
         var age = Math.floor((now - position.timestamp) / 1000)
-        if (age > 60) {
-            this.getLocation();
-        }
         ts.html("Position updated "+age+" seconds ago");
+        return age;
     }
 
     updateElevationAndSpeed(p) {
