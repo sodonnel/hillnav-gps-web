@@ -8,6 +8,7 @@ import { chromium } from 'playwright';
 
 const [buildA, buildB] = process.argv.slice(2);
 const idA = path.basename(buildA), idB = path.basename(buildB);
+const precacheCount = (build) => JSON.parse(fs.readFileSync(path.join(build, 'cache_manifest.json'))).length;
 let root = buildA;
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png' };
@@ -56,8 +57,23 @@ check('First load: service worker controls page without reload', true);
 await page.waitForFunction(() => document.querySelector('#ref').textContent.startsWith('J '), null, { timeout: 10000 });
 check('First load: shows Irish grid ref', (await refText()).startsWith('J '), await refText());
 let caches1 = await cacheState();
-check('First load: build A precached (14 files)', JSON.stringify(caches1) === JSON.stringify({ ['hillnavgps-' + idA]: 14 }), JSON.stringify(caches1));
+check('First load: every file in build A cache manifest precached', JSON.stringify(caches1) === JSON.stringify({ ['hillnavgps-' + idA]: precacheCount(buildA) }), JSON.stringify(caches1));
 check('First load: no update banner', !(await bannerVisible()));
+const icons = await page.evaluate(async () => {
+  const size = async (href) => {
+    const bitmap = await createImageBitmap(await (await fetch(href)).blob());
+    return bitmap.width + 'x' + bitmap.height;
+  };
+  const manifest = await (await fetch(document.querySelector('link[rel=manifest]').href)).json();
+  const result = [];
+  for (const icon of manifest.icons) result.push({ src: icon.src, declared: icon.sizes, actual: await size(icon.src) });
+  const touch = document.querySelector('link[rel=apple-touch-icon]').href;
+  result.push({ src: touch, declared: '180x180', actual: await size(touch) });
+  return result;
+});
+const wrongIcons = icons.filter((i) => i.declared !== i.actual);
+check('Icons: manifest icons and apple-touch-icon load at their declared sizes', wrongIcons.length === 0,
+  JSON.stringify(wrongIcons.length ? wrongIcons : icons.map((i) => i.actual)));
 
 // Offline
 await context.setOffline(true);
@@ -80,7 +96,7 @@ await page.waitForFunction((id) => document.querySelector('#version').textConten
 check('Update: reloads into build B', await version() === idB, await version());
 check('Update: banner hidden after reload', !(await bannerVisible()));
 let caches2 = await cacheState();
-check('Update: only build B cache remains', JSON.stringify(caches2) === JSON.stringify({ ['hillnavgps-' + idB]: 14 }), JSON.stringify(caches2));
+check('Update: only build B cache remains, fully precached', JSON.stringify(caches2) === JSON.stringify({ ['hillnavgps-' + idB]: precacheCount(buildB) }), JSON.stringify(caches2));
 
 check('No page errors, console errors or alerts', errors.length === 0, errors.join(' | '));
 

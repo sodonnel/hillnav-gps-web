@@ -54,8 +54,9 @@ IDs. It builds from a copy of the repo inside the container, so the repo's own `
 not touched. It then runs `dev/test/swtest.mjs`, which serves the first build from a small web
 server with the location set to Slieve Donard, and checks:
 
-- on first load the service worker takes control without a reload, precaches the build, and shows
-  no update banner
+- on first load the service worker takes control without a reload, precaches every file in the
+  build's cache manifest, and shows no update banner
+- the manifest icons and the `apple-touch-icon` load at their declared sizes
 - with the browser offline, reloading `/` and loading `/index.html` still show the app and grid
   reference
 - after the server switches to the second build and the app comes back to the foreground, the
