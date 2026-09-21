@@ -40,7 +40,7 @@ node --import ./dev/test/register.mjs dev/test/gridtest.mjs
 
 ## Running the browser tests
 
-The service worker is tested in headless Chromium using Playwright. This also needs only Docker, but
+The service worker and the Keep Screen On option are tested in headless Chromium using Playwright. This also needs only Docker, but
 pulls the `ruby:3.3-alpine` image and the much larger Playwright image (about 2GB) the first time,
 and installs the `playwright` npm package on each run. From the root of the repo run:
 
@@ -61,6 +61,17 @@ server with the location set to Slieve Donard, and checks:
   update banner appears, the page keeps running the first build until Reload is tapped, and then
   reloads into the second build with only its cache left
 - there are no page errors, console errors or alerts throughout
+
+It then runs `dev/test/wakelocktest.mjs` against the first build, at phone size so the navbar menu
+is collapsed. It first turns Keep Screen On on with Chromium's real wake lock API and checks there
+are no errors. It then replaces the API with a fake that counts active locks, and checks:
+
+- the option is off by default, and turning it on holds one lock
+- the lock is re-acquired when the app comes back to the foreground, without extra requests while
+  a lock is already held
+- the setting survives a reload
+- turning it off releases the lock, including when it is turned on and off again before the
+  request completes
 
 These tests run in Chromium, not iOS Safari, so they are not a substitute for trying a build on an
 iPhone.

@@ -2,6 +2,7 @@ import PositionManager from 'PositionManager';
 
 const GRID_SYSTEM_COOOKIE_NAME = "gridSystem";
 const DEFAULT_GRID_SYSTEM = "Irish";
+const KEEP_SCREEN_ON_COOKIE_NAME = "keepScreenOn";
 var gridRef = $("#ref");
 var gpsPos = $("#gpsPos");
 var accuracy = $("#accuracy");
@@ -32,11 +33,19 @@ class HillNav {
         this.positionWatchID = null;
         this.watchStartTime = Date.now();
         this.freshPositionPending = false;
+        this.keepScreenOn = readCookie(KEEP_SCREEN_ON_COOKIE_NAME) === "true";
+        this.wakeLock = null;
+        this.wakeLockPending = false;
         this.setCoordinateSystem(coordSystem);
     }
 
     run() {
         this.getLocation();
+        if ("wakeLock" in navigator) {
+            $("#keepScreenOnItem").prop("hidden", false);
+            this.updateKeepScreenOnLabel();
+            this.requestWakeLock();
+        }
         setInterval(() => {
             this.updatePositionAge(this.positionManager.currentPosition);
         }, 1000);
@@ -63,6 +72,50 @@ class HillNav {
     resume() {
         this.getLocation();
         this.updatePositionAge(this.positionManager.currentPosition);
+        // The browser releases the wake lock whenever the page is hidden
+        this.requestWakeLock();
+    }
+
+    setKeepScreenOn(on) {
+        this.keepScreenOn = on;
+        if (on) {
+            this.requestWakeLock();
+        } else if (this.wakeLock) {
+            this.wakeLock.release();
+            this.wakeLock = null;
+        }
+        this.updateKeepScreenOnLabel();
+    }
+
+    updateKeepScreenOnLabel() {
+        $("#toggleKeepScreenOn").html("Keep Screen On: " + (this.keepScreenOn ? "On" : "Off"));
+    }
+
+    async requestWakeLock() {
+        if (!("wakeLock" in navigator) || !this.keepScreenOn || this.wakeLock || this.wakeLockPending
+                || document.visibilityState !== "visible") {
+            return;
+        }
+        this.wakeLockPending = true;
+        try {
+            let lock = await navigator.wakeLock.request("screen");
+            if (!this.keepScreenOn) {
+                // Turned off while the request was in progress
+                lock.release();
+                return;
+            }
+            lock.addEventListener("release", () => {
+                if (this.wakeLock === lock) {
+                    this.wakeLock = null;
+                }
+            });
+            this.wakeLock = lock;
+        } catch (e) {
+            // For example in low power mode. The setting stays on and is retried on resume.
+            console.log("Unable to keep the screen on: "+e.name+": "+e.message);
+        } finally {
+            this.wakeLockPending = false;
+        }
     }
 
     checkPosition() {
@@ -240,6 +293,13 @@ $( "#setSystemUK" ).click(function() {
 $( "#setSystemGPS" ).click(function() {
     createCookie(GRID_SYSTEM_COOOKIE_NAME, "GPS", 700);
     hillNav.setCoordinateSystem("GPS");
+    $("#navbarSupportedContent").collapse('hide');
+});
+
+$( "#toggleKeepScreenOn" ).click(function() {
+    let on = !hillNav.keepScreenOn;
+    createCookie(KEEP_SCREEN_ON_COOKIE_NAME, on ? "true" : "false", 700);
+    hillNav.setKeepScreenOn(on);
     $("#navbarSupportedContent").collapse('hide');
 });
 
