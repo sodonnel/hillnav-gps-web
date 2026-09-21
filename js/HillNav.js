@@ -31,6 +31,7 @@ class HillNav {
         this.positionManager = pm;
         this.positionWatchID = null;
         this.watchStartTime = Date.now();
+        this.freshPositionPending = false;
         this.setCoordinateSystem(coordSystem);
     }
 
@@ -40,10 +41,7 @@ class HillNav {
             this.updatePositionAge(this.positionManager.currentPosition);
         }, 1000);
         setInterval(() => {
-            let age = this.updatePositionAge(this.positionManager.currentPosition);
-            if (age > 60) {
-                this.getLocation();
-            }
+            this.checkPosition();
         }, 10000);
         // iOS suspends the page when it is backgrounded or the screen locks, and the
         // position watch is often dead when it comes back. Stop watching while hidden
@@ -65,6 +63,39 @@ class HillNav {
     resume() {
         this.getLocation();
         this.updatePositionAge(this.positionManager.currentPosition);
+    }
+
+    checkPosition() {
+        let position = this.positionManager.currentPosition;
+        if (!position) {
+            return;
+        }
+        let age = this.updatePositionAge(position);
+        if (position.timestamp == null) {
+            // Still waiting on the first fix, so the watch may never have started properly
+            if (age > 60) {
+                this.getLocation();
+            }
+        } else if (age > STALE_AGE_SECONDS) {
+            // iOS often stops sending watch updates while stationary. Rather than tearing
+            // down the watch, ask for a single fresh fix alongside it.
+            this.requestFreshPosition();
+        }
+    }
+
+    requestFreshPosition() {
+        if (!navigator.geolocation || this.freshPositionPending) {
+            return;
+        }
+        this.freshPositionPending = true;
+        navigator.geolocation.getCurrentPosition((pos) => {
+            this.freshPositionPending = false;
+            this.positionManager.updatePosition(pos);
+        }, (e) => {
+            // The watch reports errors to the user, so just log them here
+            this.freshPositionPending = false;
+            console.log("Unable to get a fresh position. Error code is: "+e.code);
+        }, {enableHighAccuracy: true, maximumAge: 0, timeout: 30000});
     }
 
     setCoordinateSystem(sys) {

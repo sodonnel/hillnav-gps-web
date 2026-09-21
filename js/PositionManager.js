@@ -38,7 +38,9 @@ class PositionManager {
   }
 
   updatePosition(pos) {
-    if (pos) {
+    // Positions come from both the watch and one-off requests, so ignore any that
+    // arrive out of order and are older than the one we already have
+    if (pos && (!this.gpsPos || pos.timestamp >= this.gpsPos.timestamp)) {
       this.gpsPos=pos;
     }
     if (this.gpsPos) {
