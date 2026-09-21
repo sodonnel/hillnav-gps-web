@@ -40,9 +40,10 @@ node --import ./dev/test/register.mjs dev/test/gridtest.mjs
 
 ## Running the browser tests
 
-The service worker and the Keep Screen On option are tested in headless Chromium using Playwright. This also needs only Docker, but
-pulls the `ruby:3.3-alpine` image and the much larger Playwright image (about 2GB) the first time,
-and installs the `playwright` npm package on each run. From the root of the repo run:
+The service worker, the Keep Screen On option and the saved settings are tested in headless
+Chromium using Playwright. This also needs only Docker, but pulls the `ruby:3.3-alpine` image and
+the much larger Playwright image (about 2GB) the first time, and installs the `playwright` npm
+package on each run. From the root of the repo run:
 
 ```sh
 dev/test/run_browser_tests.sh
@@ -72,6 +73,13 @@ are no errors. It then replaces the API with a fake that counts active locks, an
 - the setting survives a reload
 - turning it off releases the lock, including when it is turned on and off again before the
   request completes
+
+Finally it runs `dev/test/settingstest.mjs` against the first build, which checks:
+
+- a new user gets the Irish grid and Keep Screen On off, and nothing is saved until they choose
+- choices are saved in `localStorage`, not cookies, and survive a reload
+- settings saved in cookies by earlier versions are applied, moved to `localStorage`, and the
+  cookies removed
 
 These tests run in Chromium, not iOS Safari, so they are not a substitute for trying a build on an
 iPhone.

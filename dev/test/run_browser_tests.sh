@@ -1,6 +1,6 @@
 #!/bin/sh
-# Tests the app in headless Chromium: makes two builds of the app, then runs
-# dev/test/swtest.mjs and dev/test/wakelocktest.mjs against them using Playwright in Docker.
+# Tests the app in headless Chromium: makes two builds of the app, then runs dev/test/swtest.mjs,
+# dev/test/wakelocktest.mjs and dev/test/settingstest.mjs against them using Playwright in Docker.
 # Usage: dev/test/run_browser_tests.sh
 set -e
 
@@ -39,8 +39,10 @@ docker run --rm -v "$PWD/dev/test":/tests:ro -v "$builds":/builds:ro \
   cd /tmp
   npm init -y > /dev/null
   npm install --silent --no-audit --no-fund playwright@$PLAYWRIGHT_VERSION
-  cp /tests/swtest.mjs /tests/wakelocktest.mjs .
+  cp /tests/swtest.mjs /tests/wakelocktest.mjs /tests/settingstest.mjs .
   node swtest.mjs /builds/$1 /builds/$2
   echo
   node wakelocktest.mjs /builds/$1
+  echo
+  node settingstest.mjs /builds/$1
 "

@@ -1,8 +1,8 @@
 import PositionManager from 'PositionManager';
 
-const GRID_SYSTEM_COOOKIE_NAME = "gridSystem";
+const GRID_SYSTEM_SETTING = "gridSystem";
 const DEFAULT_GRID_SYSTEM = "Irish";
-const KEEP_SCREEN_ON_COOKIE_NAME = "keepScreenOn";
+const KEEP_SCREEN_ON_SETTING = "keepScreenOn";
 var gridRef = $("#ref");
 var gpsPos = $("#gpsPos");
 var accuracy = $("#accuracy");
@@ -17,7 +17,7 @@ const STALE_AGE_SECONDS = 20;
 class HillNav {
 
     constructor() {
-        let coordSystem = readCookie(GRID_SYSTEM_COOOKIE_NAME);
+        let coordSystem = readSetting(GRID_SYSTEM_SETTING);
         if (!coordSystem) {
             coordSystem = DEFAULT_GRID_SYSTEM;
         }
@@ -33,7 +33,7 @@ class HillNav {
         this.positionWatchID = null;
         this.watchStartTime = Date.now();
         this.freshPositionPending = false;
-        this.keepScreenOn = readCookie(KEEP_SCREEN_ON_COOKIE_NAME) === "true";
+        this.keepScreenOn = readSetting(KEEP_SCREEN_ON_SETTING) === "true";
         this.wakeLock = null;
         this.wakeLockPending = false;
         this.setCoordinateSystem(coordSystem);
@@ -250,7 +250,35 @@ function errorHandler(e) {
     }
 }
 
-// Simple cookie handling functions
+// Settings are kept in localStorage. Earlier versions used cookies, so a setting still in a
+// cookie is moved across the first time it is read.
+function readSetting(name) {
+    try {
+        let value = localStorage.getItem(name);
+        if (value === null) {
+            value = readCookie(name);
+            if (value !== null) {
+                localStorage.setItem(name, value);
+                eraseCookie(name);
+            }
+        }
+        return value;
+    } catch (e) {
+        // Storage can be unavailable, and the app works with its defaults
+        console.log("Unable to read setting "+name+": "+e.message);
+        return null;
+    }
+}
+
+function saveSetting(name, value) {
+    try {
+        localStorage.setItem(name, value);
+    } catch (e) {
+        console.log("Unable to save setting "+name+": "+e.message);
+    }
+}
+
+// Cookie handling, only used to move settings saved by earlier versions
 function createCookie(name, value, days) {
     if (days) {
         var date = new Date();
@@ -279,26 +307,26 @@ function eraseCookie(name) {
 let hillNav = new HillNav();
 
 $( "#setSystemIrish" ).click(function() {
-    createCookie(GRID_SYSTEM_COOOKIE_NAME, "Irish", 700);
+    saveSetting(GRID_SYSTEM_SETTING, "Irish");
     hillNav.setCoordinateSystem("Irish");
     $("#navbarSupportedContent").collapse('hide');
 });
 
 $( "#setSystemUK" ).click(function() {
-    createCookie(GRID_SYSTEM_COOOKIE_NAME, "UK", 700);
+    saveSetting(GRID_SYSTEM_SETTING, "UK");
     hillNav.setCoordinateSystem("UK");
     $("#navbarSupportedContent").collapse('hide');
 });
 
 $( "#setSystemGPS" ).click(function() {
-    createCookie(GRID_SYSTEM_COOOKIE_NAME, "GPS", 700);
+    saveSetting(GRID_SYSTEM_SETTING, "GPS");
     hillNav.setCoordinateSystem("GPS");
     $("#navbarSupportedContent").collapse('hide');
 });
 
 $( "#toggleKeepScreenOn" ).click(function() {
     let on = !hillNav.keepScreenOn;
-    createCookie(KEEP_SCREEN_ON_COOKIE_NAME, on ? "true" : "false", 700);
+    saveSetting(KEEP_SCREEN_ON_SETTING, on ? "true" : "false");
     hillNav.setKeepScreenOn(on);
     $("#navbarSupportedContent").collapse('hide');
 });
