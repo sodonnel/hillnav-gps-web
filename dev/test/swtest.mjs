@@ -82,5 +82,35 @@ check('Update: only build B cache remains, fully precached', JSON.stringify(cach
 
 check('No page errors, console errors or alerts', errors.length === 0, errors.join(' | '));
 
+// Persistent storage is requested only for the installed app, and only if not already granted.
+// Installed is faked through display-mode, and navigator.storage records the requests.
+const persistRequests = async ({ installed, alreadyPersisted }) => {
+  const ctx = await browser.newContext({ permissions: ['geolocation'], geolocation: { latitude: 54.18029, longitude: -5.92106 } });
+  await ctx.addInitScript(({ installed, alreadyPersisted }) => {
+    const matchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query) => query === '(display-mode: standalone)'
+      ? { matches: installed, media: query, addEventListener() {}, removeEventListener() {} }
+      : matchMedia(query);
+    window.__persistRequests = 0;
+    Object.defineProperty(navigator, 'storage', { value: {
+      persisted: async () => alreadyPersisted,
+      persist: async () => { window.__persistRequests++; return true; },
+    } });
+  }, { installed, alreadyPersisted });
+  const p = await ctx.newPage();
+  await p.goto('http://localhost:8080/');
+  await p.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 15000 });
+  await p.waitForTimeout(300);
+  const requests = await p.evaluate(() => window.__persistRequests);
+  await ctx.close();
+  return requests;
+};
+let requests = await persistRequests({ installed: false, alreadyPersisted: false });
+check('Storage: not requested in a browser tab', requests === 0, requests);
+requests = await persistRequests({ installed: true, alreadyPersisted: false });
+check('Storage: requested once when installed', requests === 1, requests);
+requests = await persistRequests({ installed: true, alreadyPersisted: true });
+check('Storage: not requested again when already kept', requests === 0, requests);
+
 await browser.close();
 finish(site);

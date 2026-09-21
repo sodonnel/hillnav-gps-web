@@ -64,6 +64,9 @@ server with the location set to Slieve Donard, and checks:
   update banner appears, the page keeps running the first build until Reload is tapped, and then
   reloads into the second build with only its cache left
 - there are no page errors, console errors or alerts throughout
+- persistent storage, which stops the browser clearing the offline cache when short of space, is
+  requested only when running as an installed app, and only if not already granted. This fakes
+  `display-mode: standalone` and `navigator.storage`
 
 It then runs `dev/test/wakelocktest.mjs` against the first build, at phone size so the navbar menu
 is collapsed. It first turns Keep Screen On on with Chromium's real wake lock API and checks there

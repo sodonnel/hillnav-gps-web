@@ -11,6 +11,8 @@ const registerServiceWorker = async () => {
     return;
   }
 
+  keepOfflineCache();
+
   let updateAccepted = false;
   const offerUpdate = (worker) => {
     document.getElementById("updateButton").onclick = () => {
@@ -48,6 +50,25 @@ const registerServiceWorker = async () => {
       registration.update().catch((error) => console.log(`Update check failed with ${error}`));
     }
   });
+};
+
+// Browsers can clear a site's storage, including the offline cache, when the device is short of
+// space. Ask for it to be kept, but only for the installed app: some browsers prompt for this, and
+// a visitor in a browser tab does not need it. Chrome often grants it to installed apps silently.
+const keepOfflineCache = async () => {
+  const installed = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  if (!installed || !navigator.storage || !navigator.storage.persist) {
+    return;
+  }
+  try {
+    if (await navigator.storage.persisted()) {
+      return;
+    }
+    const granted = await navigator.storage.persist();
+    console.log(`Persistent storage ${granted ? "granted" : "not granted"}`);
+  } catch (error) {
+    console.log(`Persistent storage request failed with ${error}`);
+  }
 };
 
 registerServiceWorker();
