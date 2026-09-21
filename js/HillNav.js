@@ -8,6 +8,10 @@ var accuracy = $("#accuracy");
 var ts = $("#ts");
 var elevation = $("#elevation");
 var speed = $("#speed");
+// Values greyed out when the position is stale
+var positionValues = $("#ref, #gpsPos, #accuracy, #elevation, #speed");
+// A position older than this many seconds is shown as stale
+const STALE_AGE_SECONDS = 20;
 
 class HillNav {
 
@@ -31,6 +35,9 @@ class HillNav {
 
     run() {
         this.getLocation();
+        setInterval(() => {
+            this.updatePositionAge(this.positionManager.currentPosition);
+        }, 1000);
         setInterval(() => {
             let age = this.updatePositionAge(this.positionManager.currentPosition);
             if (age > 60) {
@@ -98,7 +105,14 @@ class HillNav {
         var d = new Date();
         var now = d.getTime();
         var age = Math.floor((now - position.timestamp) / 1000)
-        ts.html("Position updated "+age+" seconds ago");
+        var stale = age > STALE_AGE_SECONDS;
+        positionValues.toggleClass("text-muted", stale);
+        ts.toggleClass("text-danger font-weight-bold", stale);
+        if (stale) {
+            ts.html("Position is "+age+" seconds old and may be out of date");
+        } else {
+            ts.html("Position updated "+age+" seconds ago");
+        }
         return age;
     }
 
