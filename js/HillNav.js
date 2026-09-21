@@ -20,6 +20,13 @@ const STALE_AGE_SECONDS = 20;
 const LOW_ACCURACY_METERS = 100;
 // A position this inaccurate usually means precise location is turned off
 const APPROXIMATE_ACCURACY_METERS = 1000;
+// For this long after the app starts or returns to the foreground, location errors are retried
+// without being shown, as iOS often reports one while location is starting up again
+const LOCATION_ERROR_GRACE_MS = 10000;
+// After a location error the watch is restarted after this delay, doubling on each further error
+// up to the maximum, and reset once a position arrives
+const WATCH_RESTART_DELAY_MS = 2000;
+const WATCH_RESTART_MAX_DELAY_MS = 10000;
 
 class HillNav {
 
@@ -31,6 +38,7 @@ class HillNav {
         let pm = new PositionManager();
         pm.setNewPositionCallback((p) => {
             locationError.prop("hidden", true);
+            this.watchRestartDelay = WATCH_RESTART_DELAY_MS;
             gridRef.html(formatGridReference(p));
             gpsPos.html(formatGPSPosition(p));
             accuracy.html(formatAccuracy(p));
@@ -41,6 +49,9 @@ class HillNav {
         this.positionWatchID = null;
         this.watchStartTime = Date.now();
         this.freshPositionPending = false;
+        this.resumeTime = Date.now();
+        this.watchRestartTimer = null;
+        this.watchRestartDelay = WATCH_RESTART_DELAY_MS;
         this.keepScreenOn = readSetting(KEEP_SCREEN_ON_SETTING) === "true";
         this.wakeLock = null;
         this.wakeLockPending = false;
@@ -83,6 +94,10 @@ class HillNav {
     }
 
     resume() {
+        this.resumeTime = Date.now();
+        // A fresh position request made before the app was suspended may never call back, which
+        // would stop checkPosition making any more
+        this.freshPositionPending = false;
         this.getLocation();
         this.updatePositionAge(this.positionManager.currentPosition);
         // The browser releases the wake lock whenever the page is hidden
@@ -195,13 +210,37 @@ class HillNav {
     getLocation() {
         if (navigator.geolocation) {
             this.stopLocation();
+            clearTimeout(this.watchRestartTimer);
+            this.watchRestartTimer = null;
             this.watchStartTime = Date.now();
             // maximumAge of 0 stops the browser handing back a cached position, which on
             // iOS can be from before the app was suspended.
             this.positionWatchID = navigator.geolocation.watchPosition(this.positionManager.updatePosition.bind(this.positionManager),
-                showLocationError, {enableHighAccuracy: true, maximumAge: 0, timeout:300000});
+                (e) => this.handleLocationError(e), {enableHighAccuracy: true, maximumAge: 0, timeout:300000});
         } else {
             locationError.html("This browser cannot provide your location.").prop("hidden", false);
+        }
+    }
+
+    handleLocationError(e) {
+        console.log("Unable to get the geolocation position. Error code is: "+e.code+", message: "+e.message);
+        if (e.code == e.PERMISSION_DENIED) {
+            showLocationError(e);
+            return;
+        }
+        // The watch can stop after an error, so restart it rather than waiting for the app to be
+        // reopened. Errors just after starting or resuming are usually iOS starting up again.
+        if (Date.now() - this.resumeTime > LOCATION_ERROR_GRACE_MS) {
+            showLocationError(e);
+        }
+        if (this.watchRestartTimer == null) {
+            this.watchRestartTimer = setTimeout(() => {
+                this.watchRestartTimer = null;
+                if (document.visibilityState === "visible") {
+                    this.getLocation();
+                }
+            }, this.watchRestartDelay);
+            this.watchRestartDelay = Math.min(this.watchRestartDelay * 2, WATCH_RESTART_MAX_DELAY_MS);
         }
     }
 
@@ -315,10 +354,10 @@ function devicePlatform() {
 }
 
 // Errors are shown in the card rather than with alert(), which blocks the app, and are cleared
-// when the next position arrives. The watch is restarted while waiting for a first fix and
-// when the app returns to the foreground, so it recovers if location is allowed later.
+// when the next position arrives. The watch is restarted after other errors by
+// handleLocationError, and after a denial while waiting for a first fix and when the app returns
+// to the foreground, so it recovers if location is allowed later.
 function showLocationError(e) {
-    console.log("Unable to get the geolocation position. Error code is: "+e.code+", message: "+e.message);
     let message;
     if (e.code == e.PERMISSION_DENIED) {
         message = LOCATION_DENIED_MESSAGES[devicePlatform()];

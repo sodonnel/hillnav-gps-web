@@ -41,10 +41,10 @@ node --import ./dev/test/register.mjs dev/test/gridtest.mjs
 ## Running the browser tests
 
 The service worker, the Keep Screen On option, the saved settings, the location error messages
-and the elevation, speed and accuracy display are tested in headless Chromium using Playwright,
-with the Keep Screen On option also tested in WebKit. This also needs only Docker, but pulls the
-`ruby:3.3-alpine` image and the much larger Playwright image (about 2GB) the first time, and
-installs the `playwright` npm package on each run. From the root of the repo run:
+and recovery, and the elevation, speed and accuracy display are tested in headless Chromium using
+Playwright, with the Keep Screen On option also tested in WebKit. This also needs only Docker, but
+pulls the `ruby:3.3-alpine` image and the much larger Playwright image (about 2GB) the first time,
+and installs the `playwright` npm package on each run. From the root of the repo run:
 
 ```sh
 dev/test/run_browser_tests.sh
@@ -93,7 +93,7 @@ It then runs `dev/test/settingstest.mjs` against the first build, which checks:
 - settings saved in cookies by earlier versions are applied, moved to `localStorage`, and the
   cookies removed
 
-Finally it runs `dev/test/locationtest.mjs` against the first build, which checks:
+It then runs `dev/test/locationtest.mjs` against the first build, which checks:
 
 - when location permission is denied, a message is shown in the card and no alert pops up
 - the denied message gives the settings to check on iPhone and iPad, on Android, or in general
@@ -111,6 +111,17 @@ Finally it runs `dev/test/locationtest.mjs` against the first build, which check
 
 The elevation, speed and accuracy checks use a fake geolocation, as Chromium's cannot set an
 altitude or speed.
+
+Finally it runs `dev/test/recoverytest.mjs` against the first build. This uses a scripted fake
+geolocation to check that the app recovers from location errors without being reopened:
+
+- when the first watch after returning to the foreground reports the position unavailable and then
+  goes quiet, as iOS can, the watch is restarted and a fresh position arrives, with no error
+  message shown during the retry
+- when the position stays unavailable, no message is shown for the first few seconds, then the
+  message appears, and it clears once positions arrive again
+- a fresh position request that never calls back, as can happen when iOS suspends the app, does not
+  stop the app making more once it returns to the foreground
 
 The browser tests share a small web server and the `PASS`/`FAIL` check helpers in
 `dev/test/browser_helpers.mjs`.

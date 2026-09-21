@@ -1,7 +1,7 @@
 #!/bin/sh
-# Tests the app in headless Chromium: makes two builds of the app, then runs dev/test/swtest.mjs,
-# dev/test/wakelocktest.mjs, dev/test/settingstest.mjs and dev/test/locationtest.mjs against them
-# using Playwright in Docker.
+# Tests the app in headless browsers: makes two builds of the app, then runs dev/test/swtest.mjs,
+# dev/test/wakelocktest.mjs, dev/test/settingstest.mjs, dev/test/locationtest.mjs and
+# dev/test/recoverytest.mjs against them using Playwright in Docker.
 # Usage: dev/test/run_browser_tests.sh
 set -e
 
@@ -48,4 +48,6 @@ docker run --rm -v "$PWD/dev/test":/tests:ro -v "$builds":/builds:ro \
   node settingstest.mjs /builds/$1
   echo
   node locationtest.mjs /builds/$1
+  echo
+  node recoverytest.mjs /builds/$1
 "
