@@ -90,6 +90,12 @@ class IrishGridPosition extends AbstractPosition {
     ];
 
 
+    // The Irish grid is 5x5 100km squares. Outside it there is no valid grid square.
+    if (this.easting < 0 || this.northing < 0 || this.easting >= 500000 || this.northing >= 500000) {
+      this.setOutsideGrid();
+      return;
+    }
+
     // ~~~ here is used to force integer operations so we get only the whole number
     var e100k = ~~(this.easting / 100000);
     var n100k = ~~(this.northing / 100000);

@@ -171,6 +171,9 @@ class HillNav {
 }
 
 function formatGridReference(pos) {
+    if (!pos.isInGrid()) {
+        return "Outside "+pos.gridSystem()+" Grid";
+    }
     return pos.gridSquare+" "+
         pos.majorEasting()+
         "<div style=\"display:inline; font-size: 20px\">"+pos.minorEasting()+"</div>&nbsp;&nbsp;"+

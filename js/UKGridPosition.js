@@ -85,7 +85,13 @@ class UKGridPosition extends AbstractPosition {
       'SE','SH','SJ','SK','SM','SN','SO','SP','SR','SS','ST','SU', 'SV','SW','SX',
 		       'SY','SZ','TA','TF','TG','TL','TM','TQ','TR','TV'];
 
-  
+
+    // The UK grid covers 700km x 1300km. Outside it there is no valid grid square.
+    if (this.easting < 0 || this.northing < 0 || this.easting >= 700000 || this.northing >= 1300000) {
+      this.setOutsideGrid();
+      return;
+    }
+
     var e100k = ~~(this.easting / 100000);
     var n100k = ~~(this.northing / 100000);
   

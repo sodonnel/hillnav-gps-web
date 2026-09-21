@@ -33,6 +33,16 @@ class AbstractPosition {
     this.speed = speed;
   }
 
+  setOutsideGrid() {
+    this.gridSquare = null;
+    this.gridEasting = null;
+    this.gridNorthing = null;
+  }
+
+  isInGrid() {
+    return this.gridSquare != null;
+  }
+
   gpsLatitude() {
     return this.gpsLatitude;
   }
