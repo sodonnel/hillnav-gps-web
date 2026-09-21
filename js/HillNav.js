@@ -82,9 +82,10 @@ class HillNav {
     getLocation() {
         if (navigator.geolocation) {
             this.stopLocation();
-            // maximumAge is supposed to be milli-seconds. So 1 minute is 60000
+            // maximumAge of 0 stops the browser handing back a cached position, which on
+            // iOS can be from before the app was suspended.
             this.positionWatchID = navigator.geolocation.watchPosition(this.positionManager.updatePosition.bind(this.positionManager),
-                errorHandler, {enableHighAccuracy: true, maximumAge: 60000, timeout:300000});
+                errorHandler, {enableHighAccuracy: true, maximumAge: 0, timeout:300000});
         } else {
             x.innerHTML = "Geolocation is not supported by this browser.";
         }
