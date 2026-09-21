@@ -88,6 +88,9 @@ Finally it runs `dev/test/locationtest.mjs` against the first build, which check
 - once permission is granted and the app comes back to the foreground, the position is shown and
   the message cleared
 - in a browser without geolocation, a message is shown instead of the page failing
+- the elevation is shown with its accuracy, without it when the accuracy is missing, and as
+  unavailable when there is none. This uses a fake geolocation, as Chromium's cannot set an
+  altitude
 
 These tests run in Chromium, not iOS Safari, so they are not a substitute for trying a build on an
 iPhone.

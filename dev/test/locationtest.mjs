@@ -64,6 +64,38 @@ check('No geolocation: message shown', (await error(page)) === 'This browser can
 check('No geolocation: no alerts or page errors', page.errors.length === 0, page.errors.join(' | '));
 await context.close();
 
+// Elevation display. Chromium's geolocation override has no altitude, so a fake geolocation
+// returns the readings set in window.__coords. Bringing the app back to the foreground restarts
+// the watch, which delivers the current reading.
+context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+await context.addInitScript(() => {
+  window.__coords = { latitude: 54.18029, longitude: -5.92106, accuracy: 5, altitude: null, altitudeAccuracy: null, speed: null };
+  const fix = () => ({ coords: { ...window.__coords }, timestamp: Date.now() });
+  Object.defineProperty(navigator, 'geolocation', { value: {
+    watchPosition: (success) => { setTimeout(() => success(fix()), 10); return 1; },
+    clearWatch: () => {},
+    getCurrentPosition: (success) => setTimeout(() => success(fix()), 10),
+  } });
+});
+page = await newPage(context);
+await page.goto('http://localhost:8080/');
+const reading = async (coords, selector) => {
+  await page.evaluate((c) => {
+    Object.assign(window.__coords, c);
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, coords);
+  await page.waitForTimeout(200);
+  return page.textContent(selector);
+};
+let text = await reading({ altitude: 851.4, altitudeAccuracy: 9.6 }, '#elevation');
+check('Elevation with accuracy', text === 'Elevation: 851m (within 10m)', text);
+text = await reading({ altitude: 851.4, altitudeAccuracy: null }, '#elevation');
+check('Elevation without accuracy: no "within"', text === 'Elevation: 851m', text);
+text = await reading({ altitude: null, altitudeAccuracy: null }, '#elevation');
+check('No elevation: unavailable', text === 'Elevation: unavailable', text);
+check('Elevation: no alerts or page errors', page.errors.length === 0, page.errors.join(' | '));
+await context.close();
+
 await browser.close();
 server.close();
 console.log(failures === 0 ? '\nAll checks passed' : '\n' + failures + ' check(s) failed');

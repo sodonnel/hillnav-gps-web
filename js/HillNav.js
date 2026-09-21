@@ -213,7 +213,9 @@ class HillNav {
 
     updateElevationAndSpeed(p) {
         if (p.elevation != null) {
-            elevation.html("Elevation: "+Math.round(p.elevation)+"m (within  "+Math.round(p.elevationAccuracy)+"m)");
+            // The accuracy can be missing even when there is an elevation
+            let within = p.elevationAccuracy != null ? " (within "+Math.round(p.elevationAccuracy)+"m)" : "";
+            elevation.html("Elevation: "+Math.round(p.elevation)+"m"+within);
         } else {
             elevation.html("Elevation: unavailable");
         }
