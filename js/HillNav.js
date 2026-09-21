@@ -243,6 +243,35 @@ function formatGPSPosition(pos) {
     return "Lat: "+pos.gpsLatitude+"&nbsp;&nbsp;Lon: "+pos.gpsLongitude;
 }
 
+// Where location settings are differs by platform, so the error messages do too
+const LOCATION_DENIED_MESSAGES = {
+    ios: "Location access is not allowed. On iPhone or iPad, check Settings > Privacy & Security > "+
+        "Location Services is on, and that Safari Websites is set to allow location.",
+    android: "Location access is not allowed. On Android, check Location is turned on in Settings, "+
+        "that your browser is allowed to use location, and that this site is allowed location in "+
+        "the browser's site settings.",
+    other: "Location access is not allowed. Check that location is allowed for this site in your "+
+        "browser's settings, and that your device's location services are on.",
+};
+const LOCATION_UNAVAILABLE_MESSAGES = {
+    ios: "Your position is unavailable. Check that Location Services is turned on in Settings > "+
+        "Privacy & Security.",
+    android: "Your position is unavailable. Check that Location is turned on in Settings.",
+    other: "Your position is unavailable. Check that your device's location services are turned on.",
+};
+
+function devicePlatform() {
+    let ua = navigator.userAgent;
+    // iPadOS reports itself as a Mac, but Macs have no touch screen
+    if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) {
+        return "ios";
+    }
+    if (/Android/.test(ua)) {
+        return "android";
+    }
+    return "other";
+}
+
 // Errors are shown in the card rather than with alert(), which blocks the app, and are cleared
 // when the next position arrives. The watch is restarted while waiting for a first fix and
 // when the app returns to the foreground, so it recovers if location is allowed later.
@@ -250,10 +279,9 @@ function showLocationError(e) {
     console.log("Unable to get the geolocation position. Error code is: "+e.code+", message: "+e.message);
     let message;
     if (e.code == e.PERMISSION_DENIED) {
-        message = "Location access is not allowed. On iPhone, check Settings > Privacy & Security > "+
-            "Location Services is on, and that Safari Websites is set to allow location.";
+        message = LOCATION_DENIED_MESSAGES[devicePlatform()];
     } else if (e.code == e.POSITION_UNAVAILABLE) {
-        message = "Your position is unavailable. Check that Location Services is turned on.";
+        message = LOCATION_UNAVAILABLE_MESSAGES[devicePlatform()];
     } else {
         message = "Still waiting for a GPS fix. This can take longer indoors or under heavy cover.";
     }

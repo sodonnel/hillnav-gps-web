@@ -86,6 +86,8 @@ It then runs `dev/test/settingstest.mjs` against the first build, which checks:
 Finally it runs `dev/test/locationtest.mjs` against the first build, which checks:
 
 - when location permission is denied, a message is shown in the card and no alert pops up
+- the denied message gives the settings to check on iPhone and iPad, on Android, or in general
+  elsewhere, based on the user agent
 - once permission is granted and the app comes back to the foreground, the position is shown and
   the message cleared
 - in a browser without geolocation, a message is shown instead of the page failing

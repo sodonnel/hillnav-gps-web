@@ -35,6 +35,28 @@ check('Allowed and back in foreground: grid ref shown and message cleared', (awa
 check('No alerts or page errors', page.errors.length === 0, page.errors.join(' | '));
 await context.close();
 
+// Denied messages give the settings for the user's platform. iPadOS reports itself as a Mac with
+// a touch screen.
+const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
+const MAC_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15';
+const ANDROID_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36';
+const platforms = [
+  { name: 'iPhone', userAgent: IPHONE_UA, touchPoints: 5, expect: 'On iPhone or iPad, check Settings > Privacy & Security' },
+  { name: 'iPad', userAgent: MAC_UA, touchPoints: 5, expect: 'On iPhone or iPad, check Settings > Privacy & Security' },
+  { name: 'Mac', userAgent: MAC_UA, touchPoints: 0, expect: "Check that location is allowed for this site in your browser's settings" },
+  { name: 'Android', userAgent: ANDROID_UA, touchPoints: 5, expect: 'On Android, check Location is turned on in Settings' },
+];
+for (const platform of platforms) {
+  context = await browser.newContext({ viewport: { width: 390, height: 844 }, userAgent: platform.userAgent });
+  await context.addInitScript((n) => Object.defineProperty(navigator, 'maxTouchPoints', { get: () => n }), platform.touchPoints);
+  page = await newPage(context);
+  await page.goto('http://localhost:8080/');
+  await page.waitForFunction(() => !document.querySelector('#locationError').hidden, null, { timeout: 10000 });
+  const message = await error(page) || '';
+  check(`Denied on ${platform.name}: message gives the settings for that platform`, message.includes(platform.expect), message);
+  await context.close();
+}
+
 // Browser without geolocation
 context = await browser.newContext({ viewport: { width: 390, height: 844 } });
 await context.addInitScript(() => Object.defineProperty(navigator, 'geolocation', { value: undefined }));
