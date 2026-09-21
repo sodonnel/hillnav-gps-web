@@ -10,10 +10,15 @@ var ts = $("#ts");
 var elevation = $("#elevation");
 var speed = $("#speed");
 var locationError = $("#locationError");
-// Values greyed out when the position is stale
-var positionValues = $("#ref, #gpsPos, #accuracy, #elevation, #speed");
+// Values greyed out when the position is stale or inaccurate. The accuracy line is styled
+// separately, as it is red when the accuracy is low.
+var positionValues = $("#ref, #gpsPos, #elevation, #speed");
 // A position older than this many seconds is shown as stale
 const STALE_AGE_SECONDS = 20;
+// A position less accurate than this many meters is shown as low accuracy
+const LOW_ACCURACY_METERS = 100;
+// A position this inaccurate usually means precise location is turned off
+const APPROXIMATE_ACCURACY_METERS = 1000;
 
 class HillNav {
 
@@ -27,7 +32,7 @@ class HillNav {
             locationError.prop("hidden", true);
             gridRef.html(formatGridReference(p));
             gpsPos.html(formatGPSPosition(p));
-            accuracy.html("Within "+ p.accuracy + " meters");
+            accuracy.html(formatAccuracy(p));
             this.updatePositionAge(p);
             this.updateElevationAndSpeed(p);
         });
@@ -201,7 +206,10 @@ class HillNav {
         }
         var age = Math.floor((now - position.timestamp) / 1000)
         var stale = age > STALE_AGE_SECONDS;
-        positionValues.toggleClass("text-muted", stale);
+        var lowAccuracy = position.accuracy > LOW_ACCURACY_METERS;
+        positionValues.toggleClass("text-muted", stale || lowAccuracy);
+        accuracy.toggleClass("text-danger font-weight-bold", lowAccuracy);
+        accuracy.toggleClass("text-muted", stale && !lowAccuracy);
         ts.toggleClass("text-danger font-weight-bold", stale);
         if (stale) {
             ts.html("Position is "+age+" seconds old and may be out of date");
@@ -239,6 +247,18 @@ function formatGridReference(pos) {
         "<div style=\"display:inline; font-size: 20px\">"+pos.minorNorthing()+"</div>";
 }
 
+function formatAccuracy(pos) {
+    let text = "Within "+pos.accuracy+" meters";
+    if (pos.accuracy >= APPROXIMATE_ACCURACY_METERS) {
+        return text+". This is approximate, which usually means precise location is off. "+
+            PRECISE_LOCATION_MESSAGES[devicePlatform()];
+    }
+    if (pos.accuracy > LOW_ACCURACY_METERS) {
+        return text+" - low accuracy, so the grid reference may be out";
+    }
+    return text;
+}
+
 function formatGPSPosition(pos) {
     return "Lat: "+pos.gpsLatitude+"&nbsp;&nbsp;Lon: "+pos.gpsLongitude;
 }
@@ -258,6 +278,14 @@ const LOCATION_UNAVAILABLE_MESSAGES = {
         "Privacy & Security.",
     android: "Your position is unavailable. Check that Location is turned on in Settings.",
     other: "Your position is unavailable. Check that your device's location services are turned on.",
+};
+
+const PRECISE_LOCATION_MESSAGES = {
+    ios: "On iPhone or iPad, turn on Precise Location in Settings > Privacy & Security > "+
+        "Location Services > Safari Websites.",
+    android: "On Android, allow precise location for your browser in Settings > Apps > "+
+        "your browser > Permissions > Location.",
+    other: "Check that precise location is allowed for your browser.",
 };
 
 function devicePlatform() {

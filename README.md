@@ -41,10 +41,10 @@ node --import ./dev/test/register.mjs dev/test/gridtest.mjs
 ## Running the browser tests
 
 The service worker, the Keep Screen On option, the saved settings, the location error messages
-and the elevation and speed display are tested in headless Chromium using Playwright. This also
-needs only Docker, but pulls the `ruby:3.3-alpine` image and the much larger Playwright image
-(about 2GB) the first time, and installs the `playwright` npm package on each run. From the root of
-the repo run:
+and the elevation, speed and accuracy display are tested in headless Chromium using Playwright.
+This also needs only Docker, but pulls the `ruby:3.3-alpine` image and the much larger Playwright
+image (about 2GB) the first time, and installs the `playwright` npm package on each run. From the
+root of the repo run:
 
 ```sh
 dev/test/run_browser_tests.sh
@@ -95,9 +95,12 @@ Finally it runs `dev/test/locationtest.mjs` against the first build, which check
   unavailable when there is none
 - the speed is shown in km/h to one decimal place, including a speed of zero, and as unavailable
   when there is none
+- an accuracy worse than 100m is shown in red with the grid reference greyed out, and one of
+  1000m or more says precise location is probably off, with steps for iPhone and iPad or Android.
+  The warning clears when the accuracy improves
 
-The elevation and speed checks use a fake geolocation, as Chromium's cannot set an altitude or
-speed.
+The elevation, speed and accuracy checks use a fake geolocation, as Chromium's cannot set an
+altitude or speed.
 
 The browser tests share a small web server and the `PASS`/`FAIL` check helpers in
 `dev/test/browser_helpers.mjs`.
