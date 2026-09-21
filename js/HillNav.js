@@ -220,7 +220,8 @@ class HillNav {
             elevation.html("Elevation: unavailable");
         }
         if (p.speed != null) {
-            speed.html("Speed: "+Math.round(p.speed)+" m/s");
+            // Speed is in m/s. One decimal place of km/h is still useful at walking pace.
+            speed.html("Speed: "+(p.speed * 3.6).toFixed(1)+" km/h");
         } else {
             speed.html("Speed: unavailable");
         }
