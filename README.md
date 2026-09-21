@@ -37,3 +37,30 @@ To run the tests without the wrapper script, for example with a local Node 22 in
 ```sh
 node --import ./dev/test/register.mjs dev/test/gridtest.mjs
 ```
+
+## Running the browser tests
+
+The service worker is tested in headless Chromium using Playwright. This also needs only Docker, but
+pulls the `ruby:3.3-alpine` image and the much larger Playwright image (about 2GB) the first time,
+and installs the `playwright` npm package on each run. From the root of the repo run:
+
+```sh
+dev/test/run_browser_tests.sh
+```
+
+This makes two builds of the app in the Ruby container, a second apart so they get different build
+IDs. It builds from a copy of the repo inside the container, so the repo's own `build/` directory is
+not touched. It then runs `dev/test/swtest.mjs`, which serves the first build from a small web
+server with the location set to Slieve Donard, and checks:
+
+- on first load the service worker takes control without a reload, precaches the build, and shows
+  no update banner
+- with the browser offline, reloading `/` and loading `/index.html` still show the app and grid
+  reference
+- after the server switches to the second build and the app comes back to the foreground, the
+  update banner appears, the page keeps running the first build until Reload is tapped, and then
+  reloads into the second build with only its cache left
+- there are no page errors, console errors or alerts throughout
+
+These tests run in Chromium, not iOS Safari, so they are not a substitute for trying a build on an
+iPhone.
