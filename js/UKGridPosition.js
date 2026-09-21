@@ -95,7 +95,7 @@ class UKGridPosition extends AbstractPosition {
     var e100k = ~~(this.easting / 100000);
     var n100k = ~~(this.northing / 100000);
   
-    var l1 = (19 - n100k) - (19 - n100k)%5 + (e100k+10)/5;
+    var l1 = (19 - n100k) - (19 - n100k)%5 + Math.floor((e100k+10)/5);
     var l2 = ((19 - n100k)*5)%25 + e100k % 5;
   
     if (l1 > 7) {
