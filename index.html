@@ -8,7 +8,7 @@
     <link rel="icon" type="image/x-icon" href="images/touch-icon-iphone.png?CACHEBUST">
 
 
-   <!-- <script src="js/registersw.js?CACHEBUST"></script> -->
+    <script src="js/registersw.js?CACHEBUST" defer></script>
     <script type="importmap">
     {
       "imports": {
@@ -52,6 +52,10 @@
 </nav>
   
 <div class="container" style="margin-top: 30px;">
+  <div class="alert alert-info" id="updateBanner" hidden>
+    A new version of Hillnav GPS is available.
+    <button type="button" class="btn btn-primary btn-sm ml-2" id="updateButton">Reload</button>
+  </div>
   <div class="card">
     <div class="card-header" style="font-weight: bold; font-size: 15pt;" id="systemHeading">
       Irish Grid Position

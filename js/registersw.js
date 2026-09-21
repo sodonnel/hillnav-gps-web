@@ -1,20 +1,53 @@
+// Registers the service worker, and offers to reload when a new version of the app is ready.
 const registerServiceWorker = async () => {
-  if ("serviceWorker" in navigator) {
-    try {
-      const registration = await navigator.serviceWorker
-          .register("/sw.js", { scope: "./", updateViaCache: "none" });
-      registration.addEventListener("updatefound", () => {
-          console.log("New worker being installed => ", registration.installing)
-      })
-      if (registration.installing) {
-        console.log("Service worker installing");
-      } else if (registration.active) {
-        console.log("Service worker active");
-      }
-    } catch (error) {
-      console.error(`Registration failed with ${error}`);
-    }
+  if (!("serviceWorker" in navigator)) {
+    return;
   }
+  let registration;
+  try {
+    registration = await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
+  } catch (error) {
+    console.error(`Registration failed with ${error}`);
+    return;
+  }
+
+  let updateAccepted = false;
+  const offerUpdate = (worker) => {
+    document.getElementById("updateButton").onclick = () => {
+      updateAccepted = true;
+      worker.postMessage("SKIP_WAITING");
+    };
+    document.getElementById("updateBanner").hidden = false;
+  };
+
+  // A new version may already be waiting from an earlier visit
+  if (registration.waiting && navigator.serviceWorker.controller) {
+    offerUpdate(registration.waiting);
+  }
+  registration.addEventListener("updatefound", () => {
+    const worker = registration.installing;
+    worker.addEventListener("statechange", () => {
+      // With no controller this is the first install, which needs no reload
+      if (worker.state === "installed" && navigator.serviceWorker.controller) {
+        offerUpdate(worker);
+      }
+    });
+  });
+
+  // The first install also changes the controller, so only reload for an accepted update
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (updateAccepted) {
+      window.location.reload();
+    }
+  });
+
+  // iOS home screen apps are rarely reloaded, so the browser's own update check on page load
+  // seldom runs. Check again whenever the app comes back to the foreground.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      registration.update().catch((error) => console.log(`Update check failed with ${error}`));
+    }
+  });
 };
 
 registerServiceWorker();
